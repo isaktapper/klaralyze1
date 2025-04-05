@@ -5,149 +5,136 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  BarChart3,
-  LifeBuoy,
-  LineChart,
-  Menu,
-  MessageSquare,
-  Package,
-  PanelLeft,
-  Settings,
-  Users,
-  X,
-  Lightbulb,
-} from "lucide-react";
+import { Plus, Settings, HelpCircle, User, LogOut, Users, LayoutDashboard, BarChart3, Lightbulb } from "lucide-react";
+import { Logo } from "@/components/ui/Logo";
+import Image from "next/image";
 
-interface DashboardLayoutProps {
-  children: React.ReactNode;
-}
+const navigation = [
+  { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Dashboards", href: "/dashboard/dashboards", icon: BarChart3 },
+  { name: "Insights", href: "/dashboard/insights", icon: Lightbulb },
+];
 
-export default function DashboardLayout({ children }: DashboardLayoutProps) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+const bottomNavigation = [
+  { name: "Invite Coworkers", href: "/dashboard/invite", icon: Users },
+  { name: "Settings", href: "/dashboard/settings", icon: Settings },
+  { name: "Help & Support", href: "/dashboard/support", icon: HelpCircle },
+];
+
+export default function DashboardLayout({ children, isGuiding }: { children: React.ReactNode, isGuiding?: boolean }) {
   const pathname = usePathname();
 
-  const routes = [
-    {
-      title: "Dashboard",
-      href: "/dashboard",
-      icon: BarChart3,
-    },
-    {
-      title: "Tickets",
-      href: "/dashboard/tickets",
-      icon: MessageSquare,
-    },
-    {
-      title: "Analytics",
-      href: "/dashboard/analytics",
-      icon: LineChart,
-    },
-    {
-      title: "Insights",
-      href: "/dashboard/insights",
-      icon: Lightbulb,
-    },
-    {
-      title: "Teams",
-      href: "/dashboard/teams",
-      icon: Users,
-    },
-    {
-      title: "Knowledge Base",
-      href: "/dashboard/knowledge-base",
-      icon: Package,
-    },
-    {
-      title: "Settings",
-      href: "/dashboard/settings",
-      icon: Settings,
-    },
-    {
-      title: "Help & Support",
-      href: "/dashboard/support",
-      icon: LifeBuoy,
-    },
-  ];
-
   return (
-    <div className="flex min-h-screen">
-      {/* Mobile Sidebar Toggle */}
-      <Button
-        variant="outline"
-        size="icon"
-        className="fixed left-4 top-4 z-50 lg:hidden"
-        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-      >
-        {isSidebarOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-      </Button>
-
+    <div className="min-h-screen bg-gray-50">
       {/* Sidebar */}
-      <div
+      <div 
         className={cn(
-          "fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r bg-background transition-all duration-300 lg:static",
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0 lg:w-20"
-        )}
+          "group fixed inset-y-0 left-0 z-50 w-20 bg-gradient-to-b from-blue-600 to-blue-800 transition-all duration-300",
+          isGuiding ? "!w-64" : "hover:w-64"
+        )} 
+        data-tour="nav"
       >
-        <div className="flex h-14 items-center border-b px-4">
-          <Link href="/" className="flex items-center space-x-2">
-            <LineChart className="h-6 w-6 text-primary" />
-            <span className={cn("font-bold transition-all", !isSidebarOpen && "lg:hidden")}>
-              Klaralyze
-            </span>
+        <div className="flex h-16 items-center bg-[#1a237e] pl-6">
+          <Link href="/" className="flex items-center">
+            <div className="relative flex items-center">
+              {/* Icon - Always visible, larger than nav icons */}
+              <div className="relative w-8 h-8 flex items-center justify-center">
+                <Image
+                  src="/klaralyze_icon.svg"
+                  alt="Klaralyze"
+                  width={32}
+                  height={32}
+                  className="object-contain brightness-0 invert"
+                  priority
+                />
+              </div>
+              {/* Text - Revealed on hover */}
+              <div className={cn(
+                "overflow-hidden transition-all duration-300 ml-4",
+                isGuiding ? "!w-40 opacity-100" : "w-0 group-hover:w-40"
+              )}>
+                <div className="whitespace-nowrap">
+                  <span className="text-white text-xl font-medium">klaralyze</span>
+                </div>
+              </div>
+            </div>
           </Link>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="ml-auto hidden lg:flex"
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          >
-            <PanelLeft className="h-4 w-4" />
-          </Button>
         </div>
-        <ScrollArea className="flex-1 py-2">
-          <nav className="grid gap-1 px-2">
-            {routes.map((route) => (
+
+        <nav className="mt-2">
+          {navigation.map((item) => (
+            <Link
+              key={item.name}
+              href={item.href}
+              data-tour={item.href === "/dashboard" ? "overview" : item.href === "/dashboard/dashboards" ? "dashboards" : "insights"}
+              className={cn(
+                "group/item flex h-12 items-center pl-6 text-sm font-medium transition-colors relative",
+                pathname === item.href
+                  ? "bg-blue-700/50 text-white"
+                  : "text-white hover:bg-blue-700/50 hover:text-white"
+              )}
+            >
+              <div className="w-8 flex items-center justify-center">
+                <item.icon className="h-5 w-5 shrink-0" />
+              </div>
+              <span className={cn(
+                "transition-opacity duration-300 absolute left-[56px]",
+                isGuiding ? "!opacity-100" : "opacity-0 group-hover:opacity-100"
+              )}>
+                {item.name}
+              </span>
+            </Link>
+          ))}
+        </nav>
+
+        <div className="absolute bottom-0 left-0 right-0 pb-4">
+          <div>
+            {bottomNavigation.map((item) => (
               <Link
-                key={route.href}
-                href={route.href}
+                key={item.name}
+                href={item.href}
                 className={cn(
-                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
-                  pathname === route.href ? "bg-accent text-accent-foreground" : "transparent",
-                  !isSidebarOpen && "lg:justify-center lg:px-2"
+                  "group/item flex h-12 items-center pl-6 text-sm font-medium transition-colors relative",
+                  pathname === item.href
+                    ? "bg-blue-700/50 text-white"
+                    : "text-white hover:bg-blue-700/50 hover:text-white"
                 )}
               >
-                <route.icon className="h-4 w-4" />
-                <span className={cn("transition-all", !isSidebarOpen && "lg:hidden")}>
-                  {route.title}
+                <div className="w-8 flex items-center justify-center">
+                  <item.icon className="h-5 w-5 shrink-0" />
+                </div>
+                <span className={cn(
+                  "transition-opacity duration-300 absolute left-[56px]",
+                  isGuiding ? "!opacity-100" : "opacity-0 group-hover:opacity-100"
+                )}>
+                  {item.name}
                 </span>
               </Link>
             ))}
-          </nav>
-        </ScrollArea>
-        <div className="border-t p-4">
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-full bg-primary/10">
-              <span className="flex h-full w-full items-center justify-center text-xs font-medium">
-                JD
-              </span>
-            </div>
-            <div className={cn("flex flex-col", !isSidebarOpen && "lg:hidden")}>
-              <span className="text-sm font-medium">John Doe</span>
-              <span className="text-xs text-muted-foreground">john@example.com</span>
+          </div>
+
+          <div className="mt-4 border-t border-white/10 pt-4">
+            <div className="flex items-center pl-6">
+              <div className="h-8 w-8 shrink-0 rounded-full bg-blue-700/50" />
+              <div className={cn(
+                "transition-opacity duration-300 ml-4 min-w-0",
+                isGuiding ? "!opacity-100" : "opacity-0 group-hover:opacity-100"
+              )}>
+                <p className="text-sm font-medium text-white truncate">John Doe</p>
+                <p className="text-xs text-blue-100 truncate">john@example.com</p>
+              </div>
             </div>
           </div>
         </div>
       </div>
-      
-      {/* Main Content */}
-      <main className={cn(
-        "flex-1 overflow-auto p-4 transition-all duration-300",
-        isSidebarOpen ? "lg:ml-0" : "lg:ml-0"
+
+      {/* Main content */}
+      <div className={cn(
+        "transition-all duration-300",
+        isGuiding ? "pl-64" : "pl-20"
       )}>
         {children}
-      </main>
+      </div>
     </div>
   );
 } 

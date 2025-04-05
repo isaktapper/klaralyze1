@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Analytics Demo</title>
+  <style>
+    body { margin: 0; padding: 0; }
+    .metric-card {
+      transition: transform 0.2s;
+    }
+    .metric-card:hover {
+      transform: translateY(-4px);
+    }
+  </style>
+</head>
+<body>
+  <div class="w-[800px] h-[600px] bg-white p-8">
+    <!-- Header -->
+    <div class="mb-8">
+      <h2 class="text-2xl font-bold text-gray-900">Analytics Overview</h2>
+      <p class="text-gray-600 mt-2">Last 30 days performance</p>
+    </div>
+
+    <!-- Metrics Grid -->
+    <div class="grid grid-cols-3 gap-6 mb-8">
+      <!-- First Response Time -->
+      <div class="metric-card bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md">
+        <div class="flex items-center justify-between mb-4">
+          <div class="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div class="flex items-center space-x-1">
+            <span class="text-green-600 text-sm">↓ 15%</span>
+          </div>
+        </div>
+        <h3 class="text-sm font-medium text-gray-600">First Response Time</h3>
+        <div class="mt-2 flex items-baseline">
+          <p class="text-2xl font-semibold text-gray-900">1.2h</p>
+          <p class="ml-2 text-sm text-gray-600">avg</p>
+        </div>
+      </div>
+
+      <!-- Resolution Rate -->
+      <div class="metric-card bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md">
+        <div class="flex items-center justify-between mb-4">
+          <div class="h-10 w-10 rounded-lg bg-purple-100 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div class="flex items-center space-x-1">
+            <span class="text-green-600 text-sm">↑ 5%</span>
+          </div>
+        </div>
+        <h3 class="text-sm font-medium text-gray-600">Resolution Rate</h3>
+        <div class="mt-2 flex items-baseline">
+          <p class="text-2xl font-semibold text-gray-900">94.2%</p>
+        </div>
+      </div>
+
+      <!-- CSAT Score -->
+      <div class="metric-card bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md">
+        <div class="flex items-center justify-between mb-4">
+          <div class="h-10 w-10 rounded-lg bg-yellow-100 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+            </svg>
+          </div>
+          <div class="flex items-center space-x-1">
+            <span class="text-green-600 text-sm">↑ 8%</span>
+          </div>
+        </div>
+        <h3 class="text-sm font-medium text-gray-600">CSAT Score</h3>
+        <div class="mt-2 flex items-baseline">
+          <p class="text-2xl font-semibold text-gray-900">4.8</p>
+          <p class="ml-2 text-sm text-gray-600">/ 5</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="grid grid-cols-3 gap-6">
+      <div class="col-span-2 bg-white rounded-xl border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Ticket Volume</h3>
+        <div class="h-[200px] bg-gradient-to-b from-blue-50 to-white rounded-lg border border-blue-100 relative overflow-hidden">
+          <div class="absolute bottom-0 left-0 right-0 h-[100px] bg-gradient-to-t from-blue-500/10 to-transparent"></div>
+          <div class="absolute bottom-0 left-0 right-0 h-[100px]" style="clip-path: path('M0,100 C150,30 300,60 450,20 L450,100 L0,100 Z')"></div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Categories</h3>
+        <div class="space-y-4">
+          <div class="flex items-center">
+            <div class="w-full bg-gray-200 rounded-full h-2.5">
+              <div class="bg-blue-600 h-2.5 rounded-full" style="width: 45%"></div>
+            </div>
+            <span class="ml-2 text-sm text-gray-600">45%</span>
+          </div>
+          <div class="flex items-center">
+            <div class="w-full bg-gray-200 rounded-full h-2.5">
+              <div class="bg-purple-600 h-2.5 rounded-full" style="width: 30%"></div>
+            </div>
+            <span class="ml-2 text-sm text-gray-600">30%</span>
+          </div>
+          <div class="flex items-center">
+            <div class="w-full bg-gray-200 rounded-full h-2.5">
+              <div class="bg-yellow-600 h-2.5 rounded-full" style="width: 25%"></div>
+            </div>
+            <span class="ml-2 text-sm text-gray-600">25%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html> 

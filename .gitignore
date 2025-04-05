@@ -1,17 +1,44 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env*.local
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
 # Node modules
 node_modules/
-
-# Next.js build output
-.next/
-out/
 
 # Production build
 dist/
 
 # Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 pnpm-debug.log*
 
 # Runtime data
@@ -31,7 +58,6 @@ pids
 *.sublime-project
 
 # macOS metadata
-.DS_Store
 .AppleDouble
 .LSOverride
 
@@ -43,9 +69,6 @@ pids
 Thumbs.db
 ehthumbs.db
 Icon?
-
-# TypeScript build
-*.tsbuildinfo
 
 # Optional: GitHub Codespaces / VS Code Remote
 .devcontainer/
@@ -63,9 +86,6 @@ logs/
 
 # Optional: Cursor/VS Code local settings
 .cursor/
-
-# Optional: Coverage reports
-coverage/
 
 # Optional: Package managers
 .pnpm-debug.log

@@ -2,358 +2,242 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, Minus, ChevronDown, ChevronUp } from "lucide-react";
+import { Check, ChevronRight, Sparkles, Zap, Rocket } from "lucide-react";
 import { motion } from "framer-motion";
+import Link from "next/link";
 
-// Define types for better type checking
-type FeatureId = string;
 type Plan = {
   name: string;
   description: string;
-  monthlyPrice: string;
-  yearlyPrice: string;
+  monthlyPrice: number;
+  yearlyPrice: number;
   period: string;
-  // Card features - displayed in the pricing cards
-  cardFeatures: Record<FeatureId, string>;
-  // Table features - displayed in the comparison table
-  tableFeatures: Record<FeatureId, string>;
-  featureIncluded?: Record<FeatureId, boolean>;
+  features: string[];
   cta: string;
   popular: boolean;
   freeTrial?: boolean;
+  color: string;
+  icon: any;
 };
-
-const featureNames = [
-  { id: "tickets", name: "Tickets/month", important: true },
-  { id: "insights", name: "Insights", important: true },
-  { id: "dashboards", name: "Dashboards", important: true },
-  { id: "datasources", name: "Data sources", important: true },
-  { id: "analytics", name: "Support analytics" },
-  { id: "integration", name: "Integration" },
-  { id: "refresh", name: "Refresh rate" },
-  { id: "retention", name: "Data retention" },
-  { id: "team", name: "Additional users" },
-  { id: "api", name: "API access" },
-  { id: "custom", name: "Custom integrations" },
-  { id: "advanced", name: "Advanced analytics" },
-  { id: "sso", name: "SSO & advanced security" }
-];
 
 const pricingPlans: Plan[] = [
   {
-    name: "Growth",
-    description: "Built for lean teams scaling fast",
-    monthlyPrice: "$49",
-    yearlyPrice: "$39",
+    name: "Starter",
+    description: "Perfect for small teams getting started with support analytics",
+    monthlyPrice: 29,
+    yearlyPrice: 25,
     period: "/month",
-    // These features are displayed in the pricing cards
-    cardFeatures: {
-      tickets: "500 tickets/month",
-      insights: "Standard insights",
-      dashboards: "Template dashboards",
-      datasources: "1 data source"
-    },
-    // These features are displayed in the detailed comparison table
-    tableFeatures: {
-      tickets: "500",
-      insights: "Standard",
-      dashboards: "Template dashboards",
-      datasources: "1 data source",
-      analytics: "Yes",
-      integration: "3 integrations",
-      refresh: "Daily",
-      retention: "30 days",
-      team: "$15/user/month",
-      api: "Yes",
-      custom: "—",
-      advanced: "—",
-      sso: "—"
-    },
-    featureIncluded: {
-      custom: false,
-      advanced: false,
-      sso: false
-    },
-    cta: "Start 14-Day Free Trial",
+    color: "from-blue-500 to-blue-600",
+    icon: Sparkles,
+    features: [
+      "Up to 100 tickets/month",
+      "Template dashboards",
+      "Smart tagging"
+    ],
+    cta: "Start Free Trial",
     popular: false,
-    freeTrial: true,
+    freeTrial: true
+  },
+  {
+    name: "Growth",
+    description: "For growing teams that need more power and flexibility",
+    monthlyPrice: 59,
+    yearlyPrice: 50,
+    period: "/month",
+    color: "from-blue-600 to-blue-700",
+    icon: Zap,
+    features: [
+      "Up to 500 tickets/month",
+      "AI-powered insights",
+      "Daily data refresh"
+    ],
+    cta: "Start Free Trial",
+    popular: true,
+    freeTrial: true
   },
   {
     name: "Professional",
-    description: "Power and flexibility for growing businesses",
-    monthlyPrice: "$99",
-    yearlyPrice: "$79",
+    description: "Advanced features for professional support teams",
+    monthlyPrice: 119,
+    yearlyPrice: 101,
     period: "/month",
-    // These features are displayed in the pricing cards
-    cardFeatures: {
-      tickets: "2000 tickets/month",
-      insights: "Advanced insights",
-      dashboards: "Custom dashboards",
-      datasources: "Up to 5 data sources"
-    },
-    // These features are displayed in the detailed comparison table
-    tableFeatures: {
-      tickets: "2,000",
-      insights: "Advanced insights",
-      dashboards: "Custom dashboards",
-      datasources: "Up to 5 data sources",
-      analytics: "Yes",
-      integration: "10 integrations",
-      refresh: "Hourly",
-      retention: "90 days",
-      team: "$10/user/month",
-      api: "Yes",
-      custom: "—",
-      advanced: "Yes",
-      sso: "—"
-    },
-    featureIncluded: {
-      custom: false,
-      sso: false
-    },
-    cta: "Start 14-Day Free Trial",
-    popular: true,
-    freeTrial: true,
+    color: "from-blue-700 to-blue-800",
+    icon: Rocket,
+    features: [
+      "Up to 2000 tickets/month",
+      "Recommendations",
+      "Anomaly alerts"
+    ],
+    cta: "Start Free Trial",
+    popular: false,
+    freeTrial: true
   },
   {
     name: "Enterprise",
-    description: "Tailored for complex, high-volume support ops",
-    monthlyPrice: "Custom",
-    yearlyPrice: "Custom",
+    description: "Custom solutions for large organizations",
+    monthlyPrice: 0,
+    yearlyPrice: 0,
     period: "",
-    // These features are displayed in the pricing cards
-    cardFeatures: {
-      tickets: "Unlimited tickets/month",
-      insights: "Advanced insights",
-      dashboards: "Custom dashboards",
-      datasources: "Unlimited data sources"
-    },
-    // These features are displayed in the detailed comparison table
-    tableFeatures: {
-      tickets: "Unlimited",
-      insights: "Advanced insights",
-      dashboards: "Custom dashboards",
-      datasources: "Unlimited data sources",
-      analytics: "Yes",
-      integration: "Unlimited",
-      refresh: "Instant",
-      retention: "Unlimited",
-      team: "Volume discount",
-      api: "Yes",
-      custom: "Yes",
-      advanced: "Yes",
-      sso: "Yes"
-    },
-    featureIncluded: {},
+    color: "from-indigo-600 to-indigo-700",
+    icon: Rocket,
+    features: [
+      "Unlimited tickets",
+      "Unlimited data sources",
+      "Everyting in Professional"
+    ],
     cta: "Contact Sales",
     popular: false,
-    freeTrial: false,
-  },
+    freeTrial: false
+  }
 ];
 
 export function Pricing() {
   const [isYearly, setIsYearly] = useState(false);
-  const [showFullComparison, setShowFullComparison] = useState(false);
-
-  const renderFeatureValue = (plan: Plan, featureId: FeatureId) => {
-    // For the card display
-    if (plan.featureIncluded && plan.featureIncluded[featureId] === false) {
-      return (
-        <Minus className={`h-4 w-4 mr-2 mt-0.5 flex-shrink-0 ${plan.popular ? 'text-blue-200' : 'text-slate-400'}`} />
-      );
-    }
-    return (
-      <Check className={`h-4 w-4 mr-2 mt-0.5 flex-shrink-0 ${plan.popular ? 'text-blue-200' : 'text-emerald-500'}`} />
-    );
-  };
-
-  const renderTableValue = (plan: Plan, featureId: FeatureId) => {
-    // For the table display
-    if (plan.featureIncluded && plan.featureIncluded[featureId] === false) {
-      return <Minus className="h-4 w-4 mx-auto text-slate-400" />;
-    } 
-    
-    if (plan.tableFeatures[featureId] === "Yes") {
-      return <Check className="h-5 w-5 mx-auto text-emerald-500" />;
-    } 
-    
-    return <span>{plan.tableFeatures[featureId]}</span>;
-  };
 
   return (
-    <section className="py-20 bg-slate-50">
-      <div className="container px-4 mx-auto">
-        <div className="max-w-2xl mx-auto mb-8 text-center">
+    <div className="py-24 sm:py-32 bg-gradient-to-b from-white to-blue-50">
+      <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-          >
-            <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+          className="mx-auto max-w-2xl text-center"
+        >
+          <div className="inline-flex items-center justify-center px-4 py-1.5 mb-3 rounded-full bg-blue-50 border border-blue-100">
+            <span className="text-sm font-medium text-blue-700 flex items-center">
+              <Sparkles className="w-4 h-4 mr-2" />
+              Pricing
+            </span>
+          </div>
+          <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
               Simple, transparent pricing
             </h2>
-            <p className="mt-2 text-lg text-slate-600">
-              Choose the plan that's right for your business
+          <p className="mt-4 text-lg text-gray-600">
+            Choose the plan that's right for your team. All plans include our core features.
             </p>
           </motion.div>
-        </div>
 
-        <div className="flex justify-center mb-8">
-          <div className="bg-slate-900 p-1 rounded-full inline-flex items-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="mt-8 flex justify-center"
+        >
+          <div className="inline-flex items-center rounded-full bg-blue-50 p-1">
             <button
               onClick={() => setIsYearly(false)}
-              className={`px-6 py-2 text-sm font-medium rounded-full transition-all ${
+              className={`rounded-full px-4 py-2 text-sm font-medium ${
                 !isYearly 
-                  ? 'bg-white text-slate-900 shadow' 
-                  : 'text-slate-400 hover:text-white'
+                  ? "bg-white text-blue-600 shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
               }`}
             >
-              MONTHLY
+              Monthly
             </button>
             <button
               onClick={() => setIsYearly(true)}
-              className={`px-6 py-2 text-sm font-medium rounded-full transition-all ${
+              className={`rounded-full px-4 py-2 text-sm font-medium ${
                 isYearly 
-                  ? 'bg-white text-slate-900 shadow' 
-                  : 'text-slate-400 hover:text-white'
+                  ? "bg-white text-blue-600 shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
               }`}
             >
-              YEARLY (SAVE 20%)
+              Yearly
+              <span className="ml-1 text-xs text-blue-600">Save 15%</span>
             </button>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="grid max-w-screen-lg gap-8 mx-auto md:grid-cols-3">
-          {pricingPlans.map((plan, index) => (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          className="mx-auto mt-16 grid max-w-lg grid-cols-1 gap-y-6 sm:gap-y-8 lg:mt-20 lg:max-w-none lg:grid-cols-4 lg:gap-x-8"
+        >
+          {pricingPlans.map((plan) => (
             <motion.div
               key={plan.name}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              className={`flex flex-col p-6 rounded-2xl shadow-lg ${
-                plan.popular
-                  ? 'bg-gradient-to-tr from-blue-500 to-cyan-500 text-white relative border-2 border-blue-500 scale-105 z-10'
-                  : 'bg-white border border-slate-200'
-              }`}
+              whileHover={{ y: -5 }}
+              className="group relative flex flex-col rounded-2xl bg-white p-8 shadow-sm ring-1 ring-blue-200 hover:shadow-xl transition-all duration-300"
             >
-              {plan.popular && (
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white text-xs font-medium px-4 py-1 rounded-full">
-                  Most Popular
+              <div
+                className={`absolute inset-0 rounded-2xl bg-gradient-to-r ${plan.color} opacity-0 group-hover:opacity-5 transition-opacity pointer-events-none`}
+              />
+              <div className="flex items-center gap-x-4">
+                <div
+                  className={`h-10 w-10 rounded-lg bg-gradient-to-r ${plan.color} flex items-center justify-center shadow-lg`}
+                >
+                  <plan.icon className="h-5 w-5 text-white" />
                 </div>
-              )}
-              <div className="mb-4">
-                <h3 className={`text-2xl font-bold ${plan.popular ? 'text-white' : 'text-slate-900'}`}>
+                <h3 className="text-lg font-semibold leading-7 text-gray-900">
                   {plan.name}
                 </h3>
-                <p className={`mt-1 text-sm ${plan.popular ? 'text-blue-100' : 'text-slate-600'}`}>
-                  {plan.description}
-                </p>
               </div>
-              <div className="flex flex-col mb-5 h-24">
-                <div className="flex items-end">
-                  <span className={`text-4xl font-bold ${plan.popular ? 'text-white' : 'text-slate-900'}`}>
-                    {isYearly ? plan.yearlyPrice : plan.monthlyPrice}
+              <p className="mt-4 text-sm leading-6 text-gray-600">
+                {plan.description}
+              </p>
+              <p className="mt-6 flex items-baseline gap-x-1">
+                {plan.monthlyPrice === 0 ? (
+                  <span className="text-4xl font-bold tracking-tight text-gray-900">Custom</span>
+                ) : (
+                  <>
+                    <span className="text-4xl font-bold tracking-tight text-gray-900">
+                      ${isYearly ? plan.yearlyPrice : plan.monthlyPrice}
                   </span>
-                  <span className={`text-sm ml-1 mb-1 ${plan.popular ? 'text-blue-100' : 'text-slate-600'}`}>
-                    {plan.period}
+                    <span className="text-sm font-semibold leading-6 text-gray-600">
+                      /month
                   </span>
-                </div>
-                {plan.freeTrial && (
-                  <div className={`mt-2 text-sm ${plan.popular ? 'text-blue-100' : 'text-emerald-600'}`}>
-                    Includes 14-day free trial, no credit card required
-                  </div>
+                  </>
                 )}
+              </p>
+              <ul role="list" className="mt-8 space-y-3 text-sm leading-6 text-gray-600">
+                {plan.features.map((feature, index) => (
+                  <li key={index} className="flex gap-x-3">
+                    <div className={`h-6 w-6 rounded-lg bg-gradient-to-r ${plan.color} flex items-center justify-center`}>
+                      <Check className="h-4 w-4 text-white" />
               </div>
-
-              <ul className="mb-6 space-y-3 flex-1">
-                {featureNames
-                  .filter(feature => feature.important)
-                  .map((feature) => (
-                    <li key={feature.id} className="flex items-start">
-                      {renderFeatureValue(plan, feature.id)}
-                      <span className={`text-sm ${plan.popular ? 'text-blue-100' : 'text-slate-700'}`}>
-                        {plan.cardFeatures[feature.id]}
-                      </span>
+                    {feature}
                     </li>
                   ))}
               </ul>
-
-              <Button 
-                className={`mt-auto ${
-                  plan.popular 
-                    ? 'bg-white text-blue-600 hover:bg-blue-50 shadow-lg shadow-blue-500/30' 
-                    : plan.name === 'Enterprise' 
-                      ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:from-blue-600 hover:to-cyan-600'
-                      : 'bg-slate-900 text-white hover:bg-slate-800'
-                }`}
-                size={plan.popular ? "lg" : "default"}
+              {plan.freeTrial ? (
+                <Link
+                  href="/register"
+                  className={`relative z-10 mt-8 block w-full rounded-md bg-gradient-to-r ${plan.color} py-3 text-center font-semibold text-white hover:opacity-90`}
+                >
+                  {plan.cta}
+                </Link>
+              ) : (
+                <Link
+                  href="/contact"
+                  className={`relative z-10 mt-8 block w-full rounded-md bg-gradient-to-r ${plan.color} py-3 text-center font-semibold text-white hover:opacity-90`}
               >
                 {plan.cta}
-              </Button>
+                </Link>
+              )}
             </motion.div>
           ))}
-        </div>
-        
-        <div className="mt-8 text-center">
-          <button 
-            onClick={() => setShowFullComparison(!showFullComparison)}
-            className="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium"
-          >
-            {showFullComparison ? "Hide full comparison" : "Show full comparison"}
-            {showFullComparison ? (
-              <ChevronUp className="ml-1 h-4 w-4" />
-            ) : (
-              <ChevronDown className="ml-1 h-4 w-4" />
-            )}
-          </button>
-        </div>
+        </motion.div>
 
-        {showFullComparison && (
-          <div className="mt-8 max-w-screen-lg mx-auto">
-            <div className="bg-white rounded-xl shadow-md border border-slate-200">
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="border-b border-slate-200 bg-slate-50">
-                      <th className="p-4 text-left text-slate-700 font-medium">Feature</th>
-                      {pricingPlans.map(plan => (
-                        <th key={plan.name} className="p-4 text-center text-slate-700 font-medium">
-                          {plan.name}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {featureNames.map(feature => (
-                      <tr key={feature.id} className="border-b border-slate-200 hover:bg-slate-50">
-                        <td className="p-4 text-left text-slate-700 font-medium">
-                          {feature.name}
-                        </td>
-                        {pricingPlans.map(plan => (
-                          <td key={`${plan.name}-${feature.id}`} className="p-4 text-center text-slate-600">
-                            {renderTableValue(plan, feature.id)}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        <div className="mt-8 text-center">
-          <p className="text-sm text-slate-500">
-            All prices shown are in USD. Need a custom plan?{' '}
-            <a href="#" className="text-blue-600 hover:text-blue-800 font-medium">
-              Contact our sales team
-            </a>
-          </p>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.6 }}
+          className="mt-16 text-center"
+        >
+          <Link
+            href="/features"
+            className="inline-flex items-center justify-center rounded-full bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10 hover:bg-blue-100 transition-colors"
+          >
+            View All Features
+            <ChevronRight className="ml-2 h-4 w-4" />
+          </Link>
+        </motion.div>
       </div>
-    </section>
+    </div>
   );
 }

@@ -1,146 +1,98 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { 
-  Brain, 
-  Gauge, 
-  MessageSquare, 
-  TrendingUp, 
-  Sparkles, 
-  Bot, 
-  Network, 
-  LineChart,
-  Zap
-} from "lucide-react";
+import { Zap, TrendingUp, Tag, ChevronRight } from "lucide-react";
+import Link from "next/link";
 
 const features = [
   {
-    name: "Neural Network Analysis",
-    description: "Our advanced deep learning models analyze thousands of support tickets in seconds, discovering patterns and insights no human could detect.",
-    icon: Brain,
-  },
-  {
-    name: "Real-time AI Predictions",
-    description: "Predictive algorithms forecast support volume, identify potential escalations, and recommend staffing levels before issues arise.",
-    icon: Network,
-  },
-  {
-    name: "Sentiment Intelligence",
-    description: "NLP-powered sentiment analysis detects customer emotions beyond simple positive/negative, including frustration, urgency, and satisfaction signals.",
-    icon: MessageSquare,
-  },
-  {
-    name: "Anomaly Detection",
-    description: "Machine learning algorithms automatically identify unusual patterns and outliers in your support data, alerting you to emerging issues.",
-    icon: Sparkles,
-  },
-  {
-    name: "Conversational Analytics",
-    description: "Transform customer conversations into actionable data with AI that extracts key topics, feature requests, and product feedback automatically.",
-    icon: Bot,
-  },
-  {
     name: "Automated Insights",
-    description: "Stop digging through data - our AI surfaces the most important trends and opportunities without requiring manual analysis or reporting.",
+    description: "Get instant, AI-powered insights from your support data. Our system automatically analyzes tickets to surface key patterns and opportunities.",
     icon: Zap,
-  },
-  {
-    name: "Intelligent Dashboards",
-    description: "Self-organizing dashboards that prioritize the metrics that matter most to your specific business needs using machine learning.",
-    icon: Gauge,
+    gradient: "from-blue-500 to-blue-600"
   },
   {
     name: "Predictive Trends",
-    description: "Identify emerging support trends weeks before they become apparent, with AI that recognizes subtle patterns across ticket categories.",
-    icon: LineChart,
+    description: "Stay ahead of support trends with predictive analytics. Identify emerging issues before they become problems and optimize your resources.",
+    icon: TrendingUp,
+    gradient: "from-blue-500 to-blue-600"
   },
+  {
+    name: "Ticket Tagging",
+    description: "Automatically categorize and tag tickets for better organization. Save time on manual classification and get consistent insights across your support data.",
+    icon: Tag,
+    gradient: "from-blue-500 to-blue-600"
+  }
 ];
 
 export function Features() {
   return (
-    <div id="features" className="py-24 sm:py-32 bg-white">
+    <div className="py-24 sm:py-32 bg-gradient-to-b from-white to-blue-50">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <div className="mx-auto max-w-2xl lg:text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-          >
-            <div className="inline-flex items-center justify-center px-4 py-1.5 mb-3 rounded-full bg-cyan-50 border border-cyan-100">
-              <span className="text-sm font-medium text-cyan-600 flex items-center">
-                <Brain className="w-4 h-4 mr-2" />
-                AI-Powered Features
-              </span>
-            </div>
-            <h2 className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              Next-Generation ML & AI Technology
-            </h2>
-            <p className="mt-6 text-lg leading-8 text-gray-600">
-              Klaralyze uses cutting-edge artificial intelligence to transform raw support data into 
-              strategic intelligence, delivering insights no traditional analytics tool can match.
-            </p>
-          </motion.div>
-        </div>
-        <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
-          <motion.div 
-            className="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-2 lg:grid-cols-4"
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-          >
-            {features.map((feature, index) => (
-              <motion.div
-                key={feature.name}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="relative group h-full"
-              >
-                <div className="relative h-full">
-                  <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 opacity-10 transform group-hover:opacity-20 transition-opacity" />
-                  <div className="relative p-6 backdrop-blur-sm rounded-xl border border-gray-200 h-full flex flex-col">
-                    <div className="mb-4 w-12 h-12 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 flex items-center justify-center shadow-lg">
-                      <feature.icon
-                        className="h-6 w-6 text-white"
-                        aria-hidden="true"
-                      />
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{feature.name}</h3>
-                    <p className="text-base text-gray-600 leading-relaxed flex-grow">{feature.description}</p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-        
-        <motion.div 
-          className="relative mt-16 overflow-hidden rounded-xl border border-gray-200 bg-gradient-to-br from-cyan-50 to-blue-50 p-8 lg:p-10"
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
+          className="mx-auto max-w-2xl text-center"
         >
-          <div className="relative z-10 max-w-2xl">
-            <h3 className="text-2xl font-bold text-gray-900 mb-3">Powered by Advanced Machine Learning</h3>
-            <p className="text-gray-700 mb-5">
-              Our AI technologies include transformer neural networks, natural language processing, and predictive analytics
-              algorithms trained specifically for customer support contexts.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <span className="px-3 py-1 rounded-full bg-white/60 text-sm font-medium text-gray-800 shadow-sm">Neural Networks</span>
-              <span className="px-3 py-1 rounded-full bg-white/60 text-sm font-medium text-gray-800 shadow-sm">NLP Processing</span>
-              <span className="px-3 py-1 rounded-full bg-white/60 text-sm font-medium text-gray-800 shadow-sm">Sentiment Analysis</span>
-              <span className="px-3 py-1 rounded-full bg-white/60 text-sm font-medium text-gray-800 shadow-sm">Anomaly Detection</span>
-              <span className="px-3 py-1 rounded-full bg-white/60 text-sm font-medium text-gray-800 shadow-sm">Predictive Modeling</span>
-            </div>
+          <div className="inline-flex items-center justify-center px-4 py-1.5 mb-3 rounded-full bg-blue-50 border border-blue-100">
+            <span className="text-sm font-medium text-blue-700 flex items-center">
+              <Zap className="w-4 h-4 mr-2" />
+              Core Features
+            </span>
           </div>
-          <div className="absolute right-0 bottom-0 opacity-20">
-            <Brain className="w-40 h-40 text-cyan-600" />
-          </div>
+          <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+            AI-Powered Support Analytics
+          </h2>
+          <p className="mt-4 text-lg text-gray-600">
+            Transform your support operations with our core AI features. Get deeper insights, predict trends, and organize your tickets automatically.
+          </p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none"
+        >
+          <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-16 lg:max-w-none lg:grid-cols-3">
+            {features.map((feature) => (
+              <motion.div
+                key={feature.name}
+                whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                className="group relative flex flex-col rounded-2xl bg-white p-8 shadow-sm ring-1 ring-blue-200 hover:shadow-xl transition-all duration-300"
+              >
+                <div className={`absolute inset-0 rounded-2xl bg-gradient-to-r ${feature.gradient} opacity-0 group-hover:opacity-5 transition-opacity`} />
+                <div className={`mb-6 w-12 h-12 rounded-lg bg-gradient-to-r ${feature.gradient} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}>
+                  <feature.icon className="h-6 w-6 text-white" />
+                </div>
+                <dt className="text-lg font-semibold leading-7 text-gray-900">
+                  {feature.name}
+                </dt>
+                <dd className="mt-2 flex flex-auto flex-col text-base leading-7 text-gray-600">
+                  <p className="flex-auto">{feature.description}</p>
+                </dd>
+              </motion.div>
+            ))}
+          </dl>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          className="mt-16 text-center"
+        >
+          <Link
+            href="/features"
+            className="inline-flex items-center justify-center rounded-full bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10 hover:bg-blue-100 transition-colors"
+          >
+            View All Features
+            <ChevronRight className="ml-2 h-4 w-4" />
+          </Link>
         </motion.div>
       </div>
     </div>

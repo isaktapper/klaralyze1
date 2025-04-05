@@ -1,30 +1,37 @@
-import Link from "next/link";
+"use client";
+
+import { motion } from "framer-motion";
+import { Logo } from "@/components/ui/Logo";
 import { LoginForm } from "@/components/auth/login-form";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 export default function LoginPage() {
   return (
-    <div className="container flex h-screen w-screen flex-col items-center justify-center">
-      <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
-        <div className="flex flex-col space-y-2 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Welcome back
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Enter your credentials to sign in to your account
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+      <div className="mx-auto max-w-7xl px-6 lg:px-8">
+        <div className="flex justify-center py-8">
+          <Logo size="small" className="white" />
         </div>
-        <LoginForm />
-        <p className="px-8 text-center text-sm text-muted-foreground">
-          Don&apos;t have an account?{" "}
-          <Link
-            href="/signup"
-            className="hover:text-brand underline underline-offset-4"
-          >
-            Sign up
-          </Link>
-        </p>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mx-auto max-w-md"
+        >
+          <div className="rounded-2xl bg-white/5 backdrop-blur-xl p-8 shadow-lg border border-white/10">
+            <h2 className="text-center text-2xl font-bold text-white">
+              Welcome back
+            </h2>
+            <p className="mt-2 text-center text-sm text-gray-400">
+              Don't have an account?{" "}
+              <a href="/register" className="font-medium text-cyan-400 hover:text-cyan-300">
+                Sign up
+              </a>
+            </p>
+
+            <LoginForm />
+          </div>
+        </motion.div>
       </div>
     </div>
   );
