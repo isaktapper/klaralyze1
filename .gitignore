@@ -1,35 +1,72 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Node modules
+node_modules/
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.js
+# Next.js build output
+.next/
+out/
 
-# testing
-/coverage
+# Production build
+dist/
 
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
+# Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 
-# local env files
-.env*.local
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
 
-# vercel
-.vercel
+# .env files
+.env*
+!.env.example
 
-# typescript
+# IDEs and editors
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# macOS metadata
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Dropbox conflict copies
+*.dropbox
+*~*
+
+# System files
+Thumbs.db
+ehthumbs.db
+Icon?
+
+# TypeScript build
 *.tsbuildinfo
-next-env.d.ts
+
+# Optional: GitHub Codespaces / VS Code Remote
+.devcontainer/
+.history/
+
+# Optional: Tailwind JIT cache
+.tailwind*
+
+# Optional: SASS / SCSS cache
+.sass-cache/
+
+# Optional: Logs & Debug output
+logs/
+*.log
+
+# Optional: Cursor/VS Code local settings
+.cursor/
+
+# Optional: Coverage reports
+coverage/
+
+# Optional: Package managers
+.pnpm-debug.log
+.cache/
