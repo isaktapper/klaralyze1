@@ -72,8 +72,10 @@ export function TicketAnalyzer({ className }: TicketAnalyzerProps) {
         params.append('to', format(dateRange.to, 'yyyy-MM-dd'));
       }
       
+      // Add group IDs to the request if selected
       if (selectedGroups.length > 0) {
         params.append('groups', selectedGroups.join(','));
+        console.log(`Including ${selectedGroups.length} groups in request:`, selectedGroups);
       }
       
       const requestUrl = `/api/dashboard/tickets/filtered?${params.toString()}`;
@@ -100,7 +102,12 @@ export function TicketAnalyzer({ className }: TicketAnalyzerProps) {
         solvedTickets: data.solvedTickets || 0
       });
       
-      toast.success(`Loaded ${data.total} tickets successfully`);
+      // Show appropriate message based on group filtering and results
+      if (selectedGroups.length > 0 && data.total === 0) {
+        toast.warning(`No tickets found for the selected groups: ${selectedGroups.join(', ')}`);
+      } else {
+        toast.success(`Loaded ${data.total} tickets successfully`);
+      }
     } catch (err) {
       console.error('Error fetching tickets:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch tickets');

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 interface Group {
@@ -90,6 +90,10 @@ export function ZendeskGroupsSelector({
           <Button variant="ghost" size="sm" onClick={clearAll} disabled={loading || selectedGroups.length === 0}>
             Clear
           </Button>
+          <Button variant="outline" size="sm" onClick={fetchGroups} disabled={loading}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
         </div>
         
         {error && (
@@ -97,6 +101,14 @@ export function ZendeskGroupsSelector({
             {error}
           </div>
         )}
+        
+        {/* Selection status */}
+        <div className="text-sm mb-3 text-gray-500">
+          {selectedGroups.length === 0 
+            ? "All groups (unfiltered)" 
+            : `${selectedGroups.length} group${selectedGroups.length === 1 ? '' : 's'} selected`
+          }
+        </div>
         
         {loading ? (
           <div className="py-4 flex justify-center">
@@ -109,20 +121,31 @@ export function ZendeskGroupsSelector({
         ) : (
           <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
             {groups.map((group) => (
-              <div key={group.id} className="flex items-center space-x-2">
+              <div key={group.id} className="flex items-center space-x-2 border-b pb-2">
                 <Checkbox
                   id={`group-${group.id}`}
                   checked={selectedGroups.includes(group.id)}
                   onCheckedChange={() => toggleGroup(group.id)}
                 />
-                <label
-                  htmlFor={`group-${group.id}`}
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                >
-                  {group.name}
-                </label>
+                <div className="flex flex-col">
+                  <label
+                    htmlFor={`group-${group.id}`}
+                    className="text-sm font-medium leading-none cursor-pointer"
+                  >
+                    {group.name} <span className="text-xs text-gray-500">(ID: {group.id})</span>
+                  </label>
+                  {group.description && (
+                    <span className="text-xs text-gray-500">{group.description}</span>
+                  )}
+                </div>
               </div>
             ))}
+          </div>
+        )}
+        
+        {selectedGroups.length > 0 && (
+          <div className="mt-3 text-xs text-gray-500">
+            Selected group IDs: {selectedGroups.join(', ')}
           </div>
         )}
       </CardContent>

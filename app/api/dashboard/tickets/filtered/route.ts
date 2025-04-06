@@ -11,7 +11,16 @@ export async function GET(request: Request) {
     const toDate = url.searchParams.get('to');
     const groups = url.searchParams.get('groups'); // Comma-separated list of group IDs
     
-    const groupIds = groups ? groups.split(',').map(id => parseInt(id.trim(), 10)) : [];
+    let groupIds: number[] = [];
+    if (groups) {
+      // Convert group IDs from string to numbers and log for debugging
+      groupIds = groups.split(',').map(id => {
+        const numId = parseInt(id.trim(), 10);
+        console.log(`Parsed group ID: ${id} -> ${numId}`);
+        return numId;
+      });
+      console.log('Processing groups filter with IDs:', groupIds);
+    }
 
     // Authentication check via Supabase
     const cookieStore = cookies();
