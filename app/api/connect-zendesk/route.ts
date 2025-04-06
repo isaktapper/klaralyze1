@@ -4,10 +4,14 @@ import { cookies } from 'next/headers';
 
 export async function POST(request: Request) {
   try {
-    const { domain, email, apiKey } = await request.json();
+    const requestData = await request.json();
+    const { domain, subdomain, email, apiKey } = requestData;
+    
+    // Use either domain or subdomain, giving preference to domain if both are provided
+    const domainValue = domain || subdomain || '';
 
     // Validate inputs
-    if (!domain || !email || !apiKey) {
+    if (!domainValue || !email || !apiKey) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -15,7 +19,7 @@ export async function POST(request: Request) {
     }
 
     // Clean domain (remove https:// and trailing slashes if present)
-    const cleanDomain = domain.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    const cleanDomain = domainValue.replace(/^https?:\/\//, '').replace(/\/$/, '');
 
     // Test Zendesk credentials by making a request to the API
     try {

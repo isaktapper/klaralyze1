@@ -72,10 +72,15 @@ export default function ConnectZendeskPage() {
       setLoading(true);
       
       try {
-        console.log('Testing Zendesk connection with:', {
+        // Log all the data we're about to send for debugging
+        console.log('Attempting to connect with data:', {
           subdomain: selectedData.subdomain,
-          email: selectedData.email
+          email: selectedData.email,
+          apiKeyLength: selectedData.apiKey?.length || 0
         });
+        
+        // First ensure subdomain doesn't already have zendesk.com
+        const subdomain = selectedData.subdomain.replace(/\.zendesk\.com$/, '');
         
         // Example API call to validate Zendesk credentials
         const response = await fetch('/api/connect-zendesk', {
@@ -84,27 +89,34 @@ export default function ConnectZendeskPage() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            subdomain: selectedData.subdomain,
+            subdomain: subdomain,
             email: selectedData.email,
             apiKey: selectedData.apiKey,
           }),
         });
         
+        // Log full response for debugging
+        console.log('Connection response status:', response.status);
+        
         const data = await response.json();
-        console.log('API response:', data);
+        console.log('API response data:', data);
         
         if (!response.ok) {
           throw new Error(data.error || 'Failed to connect to Zendesk');
         }
         
-        // Fetch groups from Zendesk
-        const groupsResponse = await fetch(`/api/zendesk-groups?subdomain=${selectedData.subdomain}&email=${selectedData.email}&apiKey=${selectedData.apiKey}`);
+        // Fetch groups from Zendesk with the same cleaned subdomain
+        console.log('Successfully connected, fetching groups...');
+        const groupsResponse = await fetch(`/api/zendesk-groups?subdomain=${subdomain}&email=${selectedData.email}&apiKey=${selectedData.apiKey}`);
         
         if (!groupsResponse.ok) {
-          throw new Error('Failed to fetch Zendesk groups');
+          const groupsError = await groupsResponse.json();
+          console.error('Failed to fetch groups:', groupsError);
+          throw new Error(groupsError.error || 'Failed to fetch Zendesk groups');
         }
         
         const groupsData = await groupsResponse.json();
+        console.log('Groups data received:', groupsData);
         setAvailableGroups(groupsData.groups || []);
         
         // Move to step 2
