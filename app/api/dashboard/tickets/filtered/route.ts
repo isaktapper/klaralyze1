@@ -10,6 +10,7 @@ export async function GET(request: Request) {
     const fromDate = url.searchParams.get('from');
     const toDate = url.searchParams.get('to');
     const groups = url.searchParams.get('groups'); // Comma-separated list of group IDs
+    const includeComments = url.searchParams.get('includeComments') === 'true';
     
     let groupIds: number[] = [];
     if (groups) {
@@ -72,7 +73,12 @@ export async function GET(request: Request) {
     }
 
     // Fetch tickets from Zendesk
-    console.log('Fetching Zendesk tickets with params:', { fromDate, toDate, groups: groupIds });
+    console.log('Fetching Zendesk tickets with params:', { 
+      fromDate, 
+      toDate, 
+      groups: groupIds,
+      includeComments
+    });
     
     try {
       let tickets = await zendesk.getFilteredTickets(startTime, groupIds);
@@ -83,6 +89,31 @@ export async function GET(request: Request) {
       }
       
       console.log(`Successfully fetched ${tickets.length} tickets from Zendesk`);
+
+      // Fetch comments for tickets if requested
+      if (includeComments && tickets.length > 0) {
+        console.log(`Fetching comments for ${tickets.length} tickets`);
+        
+        // To avoid overwhelming the API, limit to first 20 tickets if there are many
+        const ticketsToFetch = tickets.length > 20 ? tickets.slice(0, 20) : tickets;
+        
+        // Fetch comments for each ticket
+        for (const ticket of ticketsToFetch) {
+          try {
+            const comments = await zendesk.getTicketComments(ticket.ticket_id);
+            ticket.comments = comments;
+            console.log(`Added ${comments.length} comments to ticket #${ticket.ticket_id}`);
+          } catch (commentError) {
+            console.error(`Failed to fetch comments for ticket #${ticket.ticket_id}:`, commentError);
+            ticket.comments = [];
+          }
+        }
+        
+        // Add note if we limited the comments fetching
+        if (tickets.length > 20) {
+          console.log(`Only fetched comments for first 20 tickets out of ${tickets.length}`);
+        }
+      }
 
       // Calculate ticket metrics by status
       const ticketsByStatus = countTicketsByStatus(tickets);
@@ -98,7 +129,8 @@ export async function GET(request: Request) {
         pendingTickets: ticketsByStatus.pending || 0,
         solvedTickets: ticketsByStatus.solved || 0,
         avgResolutionTime,
-        tickets: tickets
+        tickets: tickets,
+        commentsIncluded: includeComments
       });
     } catch (error) {
       console.error('Error fetching tickets from Zendesk API:', error);

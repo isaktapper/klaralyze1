@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { DateRangePicker } from "@/components/dashboard/date-range-picker";
 import { ZendeskGroupsSelector } from "@/components/dashboard/zendesk-groups-selector";
 import { Button } from "@/components/ui/button";
-import { Loader2, RefreshCw, Download } from "lucide-react";
+import { Loader2, RefreshCw, Download, ChevronLeft, ChevronRight } from "lucide-react";
 import { DateRange } from "react-day-picker";
 import { subDays, format } from "date-fns";
 import { toast } from "sonner";
@@ -18,6 +18,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { TicketImportConfig, ImportConfig } from "@/components/dashboard/ticket-import-config";
 
 interface TicketAnalyzerProps {
   className?: string;
@@ -43,6 +45,16 @@ export function TicketAnalyzer({ className }: TicketAnalyzerProps) {
     openTickets: 0,
     pendingTickets: 0,
     solvedTickets: 0,
+  });
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [ticketsPerPage] = useState(10);
+
+  // Add export configuration state
+  const [exportConfig, setExportConfig] = useState<ImportConfig>({
+    selectedFields: [],
+    includeComments: true
   });
 
   // Fetch tickets on initial load
@@ -117,29 +129,52 @@ export function TicketAnalyzer({ className }: TicketAnalyzerProps) {
     }
   };
 
-  // Function to export tickets to CSV
-  const exportToCsv = () => {
+  // Updated function to export tickets with selected fields
+  const exportToCsv = (selectedFields: string[] = []) => {
     if (tickets.length === 0) {
       toast.error("No tickets to export");
       return;
     }
 
     try {
-      // Get headers from first ticket
-      const headers = Object.keys(tickets[0]).filter(key => 
-        // Filter out complex objects or arrays
-        typeof tickets[0][key] !== 'object' || tickets[0][key] === null
-      );
+      // If no fields specified, use the current export config
+      const fieldsToExport = selectedFields.length > 0 
+        ? selectedFields 
+        : exportConfig.selectedFields;
+        
+      if (fieldsToExport.length === 0) {
+        toast.error("No fields selected for export");
+        return;
+      }
       
-      // Build CSV content
-      let csvContent = headers.join(',') + '\n';
+      // Build CSV content with only selected fields
+      let csvContent = fieldsToExport.join(',') + '\n';
       
       tickets.forEach(ticket => {
-        const row = headers.map(header => {
-          const value = ticket[header];
+        const row = fieldsToExport.map(fieldId => {
+          // Handle nested field paths like 'custom_fields.something'
+          let value: any = ticket;
+          const parts = fieldId.split('.');
+          
+          for (const part of parts) {
+            if (value === null || value === undefined) {
+              value = '';
+              break;
+            }
+            value = value[part];
+          }
+          
           // Handle special cases (strings with commas, etc.)
           if (value === null || value === undefined) return '';
-          if (typeof value === 'string' && value.includes(',')) {
+          if (typeof value === 'object') {
+            // For array values like tags
+            if (Array.isArray(value)) {
+              return `"${value.join(';')}"`;
+            }
+            // For other objects, stringify
+            return `"${JSON.stringify(value).replace(/"/g, '""')}"`;
+          }
+          if (typeof value === 'string' && (value.includes(',') || value.includes('"') || value.includes('\n'))) {
             return `"${value.replace(/"/g, '""')}"`;
           }
           return value;
@@ -158,7 +193,7 @@ export function TicketAnalyzer({ className }: TicketAnalyzerProps) {
       link.click();
       document.body.removeChild(link);
       
-      toast.success("Exported tickets to CSV");
+      toast.success(`Exported ${tickets.length} tickets to CSV`);
     } catch (err) {
       console.error('Error exporting to CSV:', err);
       toast.error('Failed to export tickets');
@@ -176,6 +211,55 @@ export function TicketAnalyzer({ className }: TicketAnalyzerProps) {
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
+  };
+
+  // Calculate pagination
+  const totalPages = Math.ceil(tickets.length / ticketsPerPage);
+  const indexOfLastTicket = currentPage * ticketsPerPage;
+  const indexOfFirstTicket = indexOfLastTicket - ticketsPerPage;
+  const currentTickets = tickets.slice(indexOfFirstTicket, indexOfLastTicket);
+  
+  // Page change handler
+  const handlePageChange = (page: number) => {
+    if (page < 1 || page > totalPages) return;
+    setCurrentPage(page);
+  };
+  
+  // Generate page numbers for pagination
+  const pageNumbers = [];
+  // Show max 5 page numbers around current page
+  const maxPagesToShow = 5;
+  let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+  let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+  
+  // Adjust startPage if we're near the end
+  if (endPage - startPage + 1 < maxPagesToShow) {
+    startPage = Math.max(1, endPage - maxPagesToShow + 1);
+  }
+  
+  for (let i = startPage; i <= endPage; i++) {
+    pageNumbers.push(i);
+  }
+  
+  // Function to get group name from ID
+  const getGroupName = (groupId: number | null | undefined) => {
+    if (!groupId) return "-";
+    // Check if we have a groups selector with this ID
+    const group = document.getElementById(`group-${groupId}`);
+    if (group) {
+      // Get the closest label text
+      const label = group.nextElementSibling?.querySelector('label')?.textContent;
+      if (label) {
+        // Return just the name part, not the ID
+        return label.split('(')[0]?.trim() || `Group ${groupId}`;
+      }
+    }
+    return `Group ${groupId}`;
+  };
+
+  // Handle export config changes
+  const handleExportConfigChange = (config: ImportConfig) => {
+    setExportConfig(config);
   };
 
   return (
@@ -203,7 +287,7 @@ export function TicketAnalyzer({ className }: TicketAnalyzerProps) {
             />
           </div>
           
-          {/* Action buttons */}
+          {/* Updated action buttons with export config */}
           <div className="flex justify-between">
             <Button 
               onClick={fetchTickets} 
@@ -222,14 +306,24 @@ export function TicketAnalyzer({ className }: TicketAnalyzerProps) {
               )}
             </Button>
             
-            <Button 
-              variant="outline" 
-              onClick={exportToCsv}
-              disabled={isLoading || tickets.length === 0}
-            >
-              <Download className="mr-2 h-4 w-4" /> 
-              Export CSV
-            </Button>
+            <div className="flex">
+              <Button 
+                variant="outline" 
+                onClick={() => exportToCsv()}
+                disabled={isLoading || tickets.length === 0}
+              >
+                <Download className="mr-2 h-4 w-4" /> 
+                Export CSV
+              </Button>
+              
+              {tickets.length > 0 && (
+                <TicketImportConfig
+                  tickets={tickets}
+                  onConfigChange={handleExportConfigChange}
+                  onExport={exportToCsv}
+                />
+              )}
+            </div>
           </div>
           
           {/* Error message */}
@@ -259,27 +353,29 @@ export function TicketAnalyzer({ className }: TicketAnalyzerProps) {
             </div>
           </div>
           
-          {/* Tickets table */}
+          {/* Updated Tickets table */}
           <div className="rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>ID</TableHead>
                   <TableHead>Subject</TableHead>
+                  <TableHead>Group</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Priority</TableHead>
                   <TableHead>Created</TableHead>
-                  <TableHead>Solved</TableHead>
+                  <TableHead>Updated</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {tickets.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-4 text-muted-foreground">
                       {isLoading ? 'Loading tickets...' : 'No tickets found'}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  tickets.slice(0, 10).map((ticket) => (
+                  currentTickets.map((ticket) => (
                     <TableRow key={ticket.ticket_id}>
                       <TableCell className="font-medium">
                         #{ticket.ticket_id}
@@ -288,13 +384,19 @@ export function TicketAnalyzer({ className }: TicketAnalyzerProps) {
                         {ticket.subject}
                       </TableCell>
                       <TableCell>
+                        {ticket.group_id ? getGroupName(ticket.group_id) : "-"}
+                      </TableCell>
+                      <TableCell>
                         {getStatusBadge(ticket.status)}
+                      </TableCell>
+                      <TableCell>
+                        {ticket.priority || "-"}
                       </TableCell>
                       <TableCell>
                         {ticket.created_date ? new Date(ticket.created_date).toLocaleDateString() : '-'}
                       </TableCell>
                       <TableCell>
-                        {ticket.solved_date ? new Date(ticket.solved_date).toLocaleDateString() : '-'}
+                        {ticket.updated_date ? new Date(ticket.updated_date).toLocaleDateString() : '-'}
                       </TableCell>
                     </TableRow>
                   ))
@@ -303,9 +405,43 @@ export function TicketAnalyzer({ className }: TicketAnalyzerProps) {
             </Table>
           </div>
           
-          {tickets.length > 10 && (
+          {/* Pagination */}
+          {tickets.length > 0 && (
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious 
+                    onClick={() => handlePageChange(currentPage - 1)} 
+                    aria-disabled={currentPage === 1}
+                    className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+                
+                {pageNumbers.map(number => (
+                  <PaginationItem key={number}>
+                    <PaginationLink 
+                      onClick={() => handlePageChange(number)}
+                      isActive={currentPage === number}
+                    >
+                      {number}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+                
+                <PaginationItem>
+                  <PaginationNext 
+                    onClick={() => handlePageChange(currentPage + 1)} 
+                    aria-disabled={currentPage === totalPages}
+                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          )}
+          
+          {tickets.length > 0 && (
             <div className="text-center text-sm text-muted-foreground">
-              Showing 10 of {tickets.length} tickets. Export to CSV to view all.
+              Showing {indexOfFirstTicket + 1}-{Math.min(indexOfLastTicket, tickets.length)} of {tickets.length} tickets
             </div>
           )}
         </div>

@@ -151,6 +151,31 @@ export class ZendeskAPI {
     return response.ticket_metric
   }
 
+  async getTicketComments(ticketId: number): Promise<any[]> {
+    try {
+      console.log(`Fetching comments for ticket #${ticketId}`);
+      const response = await this.request(`tickets/${ticketId}/comments.json`);
+      
+      if (!response.comments || !Array.isArray(response.comments)) {
+        console.warn(`No comments found for ticket #${ticketId}`);
+        return [];
+      }
+      
+      return response.comments.map((comment: any) => ({
+        id: comment.id,
+        author_id: comment.author_id,
+        body: comment.body,
+        html_body: comment.html_body,
+        public: comment.public,
+        created_at: comment.created_at,
+        attachments: comment.attachments || []
+      }));
+    } catch (error) {
+      console.error(`Error fetching comments for ticket #${ticketId}:`, error);
+      return [];
+    }
+  }
+
   private transformTicket = (ticket: any): Partial<ZendeskTicket> => {
     // Check if metric_sets is available (from search endpoint)
     const metrics = ticket.metric_sets ? ticket.metric_sets : ticket.metrics;
