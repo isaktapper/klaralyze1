@@ -19,6 +19,11 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
+interface FormData {
+  email: string;
+  password: string;
+}
+
 const loginSchema = z.object({
   email: z.string().email({
     message: "Please enter a valid email address.",
@@ -40,7 +45,7 @@ export function LoginForm() {
     },
   });
 
-  async function onSubmit(data: { email: string; password: string }) {
+  const onSubmit = form.handleSubmit(async (data: FormData) => {
     setIsLoading(true);
 
     try {
@@ -55,15 +60,15 @@ export function LoginForm() {
     } finally {
       setIsLoading(false);
     }
-  }
+  });
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="mt-8 space-y-6">
+      <form onSubmit={onSubmit} className="mt-8 space-y-6">
         <FormField
           control={form.control}
           name="email"
-          render={({ field }: { field: any }) => (
+          render={({ field }: { field: { onChange: (e: any) => void; value: string; } }) => (
             <FormItem>
               <FormLabel className="text-gray-300">Work email</FormLabel>
               <FormControl>
@@ -81,7 +86,7 @@ export function LoginForm() {
         <FormField
           control={form.control}
           name="password"
-          render={({ field }: { field: any }) => (
+          render={({ field }: { field: { onChange: (e: any) => void; value: string; } }) => (
             <FormItem>
               <FormLabel className="text-gray-300">Password</FormLabel>
               <FormControl>
