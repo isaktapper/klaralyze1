@@ -4,14 +4,40 @@ import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { ArrowRight, ChevronDown, ChevronUp } from 'lucide-react';
-import { HelpCircle } from "@/components/ui/icons";
 import Image from 'next/image';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+
+// Simple SVG icons instead of importing from lucide-react
+const ArrowRightIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400">
+    <path d="M5 12h14"></path>
+    <path d="m12 5 7 7-7 7"></path>
+  </svg>
+);
+
+const ChevronDownIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+    <path d="m6 9 6 6 6-6"></path>
+  </svg>
+);
+
+const ChevronUpIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+    <path d="m18 15-6-6-6 6"></path>
+  </svg>
+);
+
+const HelpCircleIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+    <circle cx="12" cy="12" r="10"></circle>
+    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+    <path d="M12 17h.01"></path>
+  </svg>
+);
 
 interface StepProps {
   currentStep: number;
@@ -179,7 +205,7 @@ export default function ConnectZendeskPage() {
               width={40}
               height={40}
             />
-            <ArrowRight className="text-gray-400" />
+            <ArrowRightIcon />
             <Image
               src="/zendesk-logo.webp"
               alt="Zendesk"
@@ -248,10 +274,10 @@ export default function ConnectZendeskPage() {
                 <div className="mt-2">
                   <Collapsible open={showApiKeyHelp} onOpenChange={setShowApiKeyHelp}>
                     <CollapsibleTrigger className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700">
-                      {showApiKeyHelp ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      {showApiKeyHelp ? <ChevronUpIcon /> : <ChevronDownIcon />}
                       <span className="flex items-center gap-1">
-                        <HelpCircle className="h-4 w-4" />
-                        How to get your API key
+                        <HelpCircleIcon />
+                        <span>How to get your API key</span>
                       </span>
                     </CollapsibleTrigger>
                     <CollapsibleContent className="mt-2 text-sm text-gray-600 space-y-2">
