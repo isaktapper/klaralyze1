@@ -28,16 +28,11 @@ const loginSchema = z.object({
   }),
 });
 
-type LoginFormData = {
-  email: string;
-  password: string;
-};
-
 export function LoginForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = React.useState(false);
 
-  const form = useForm<LoginFormData>({
+  const form = useForm({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
@@ -45,7 +40,7 @@ export function LoginForm() {
     },
   });
 
-  async function onSubmit(data: LoginFormData) {
+  async function onSubmit(data: { email: string; password: string }) {
     setIsLoading(true);
 
     try {
@@ -68,7 +63,7 @@ export function LoginForm() {
         <FormField
           control={form.control}
           name="email"
-          render={({ field }) => (
+          render={({ field }: { field: any }) => (
             <FormItem>
               <FormLabel className="text-gray-300">Work email</FormLabel>
               <FormControl>
@@ -86,7 +81,7 @@ export function LoginForm() {
         <FormField
           control={form.control}
           name="password"
-          render={({ field }) => (
+          render={({ field }: { field: any }) => (
             <FormItem>
               <FormLabel className="text-gray-300">Password</FormLabel>
               <FormControl>
