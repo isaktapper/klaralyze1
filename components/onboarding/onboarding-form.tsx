@@ -1,82 +1,71 @@
 "use client";
 
 import * as React from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
-import { toast } from "sonner";
 
-const onboardingSchema = z.object({
-  // Step 1: Personal Details
-  jobTitle: z.string().min(2, { message: "Job title is required" }),
-  company: z.string().min(2, { message: "Company name is required" }),
-  // Step 2: Preferences
-  primaryGoal: z.enum(["analytics", "customer_support", "marketing", "other"], {
-    required_error: "Please select a primary goal",
-  }),
-  teamSize: z.string({
-    required_error: "Please select a team size",
-  }),
-  // Step 3: Final Steps
-  bio: z.string().optional(),
-  interests: z.string().min(2, "Please share at least one interest").optional(),
-});
-
-type OnboardingValues = z.infer<typeof onboardingSchema>;
+interface FormData {
+  jobTitle: string;
+  company: string;
+  primaryGoal: string;
+  teamSize: string;
+  bio: string;
+  interests: string;
+}
 
 export function OnboardingForm() {
   const router = useRouter();
   const [step, setStep] = React.useState(1);
   const [isLoading, setIsLoading] = React.useState(false);
   const totalSteps = 3;
-
-  const form = useForm<OnboardingValues>({
-    resolver: zodResolver(onboardingSchema),
-    defaultValues: {
-      jobTitle: "",
-      company: "",
-      primaryGoal: undefined,
-      teamSize: "",
-      bio: "",
-      interests: "",
-    },
-    mode: "onChange",
+  
+  const [formData, setFormData] = React.useState<FormData>({
+    jobTitle: "",
+    company: "",
+    primaryGoal: "",
+    teamSize: "",
+    bio: "",
+    interests: "",
   });
 
   const nextStep = async () => {
     const fields = getFieldsForStep(step);
-    const isValid = await form.trigger(fields as any);
+    const isValid = validateStep(step);
     
     if (isValid) {
       if (step < totalSteps) {
         setStep(step + 1);
       } else {
-        await onSubmit(form.getValues());
+        await handleSubmit();
       }
+    } else {
+      toast.error("Please fill in all required fields");
     }
   };
 
   const prevStep = () => {
     if (step > 1) {
       setStep(step - 1);
+    }
+  };
+
+  const validateStep = (step: number): boolean => {
+    switch (step) {
+      case 1:
+        return formData.jobTitle.length >= 2 && formData.company.length >= 2;
+      case 2:
+        return formData.primaryGoal !== "" && formData.teamSize !== "";
+      case 3:
+        return true; // Optional fields
+      default:
+        return false;
     }
   };
 
@@ -93,7 +82,7 @@ export function OnboardingForm() {
     }
   };
 
-  async function onSubmit(data: OnboardingValues) {
+  async function handleSubmit() {
     setIsLoading(true);
 
     try {
@@ -110,6 +99,10 @@ export function OnboardingForm() {
     }
   }
 
+  const handleInputChange = (field: keyof FormData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
   return (
     <div className="space-y-6">
       <Progress value={(step / totalSteps) * 100} className="h-2" />
@@ -119,203 +112,132 @@ export function OnboardingForm() {
         <span className="text-muted-foreground">{getStepTitle(step)}</span>
       </div>
 
-      <Form {...form}>
-        <form className="space-y-6">
-          {/* Step 1: Personal Details */}
-          {step === 1 && (
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="space-y-4"
-            >
-              <FormField
-                control={form.control}
-                name="jobTitle"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Job Title</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Product Manager" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+      <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+        {/* Step 1: Personal Details */}
+        {step === 1 && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="space-y-4"
+          >
+            <div className="space-y-2">
+              <label className="block text-sm font-medium">Job Title</label>
+              <Input
+                placeholder="Product Manager"
+                value={formData.jobTitle}
+                onChange={(e) => handleInputChange("jobTitle", e.target.value)}
+                required
               />
-              <FormField
-                control={form.control}
-                name="company"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Company</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Acme Inc." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+            </div>
+            <div className="space-y-2">
+              <label className="block text-sm font-medium">Company</label>
+              <Input
+                placeholder="Acme Inc."
+                value={formData.company}
+                onChange={(e) => handleInputChange("company", e.target.value)}
+                required
               />
-            </motion.div>
-          )}
+            </div>
+          </motion.div>
+        )}
 
-          {/* Step 2: Preferences */}
-          {step === 2 && (
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="space-y-4"
-            >
-              <FormField
-                control={form.control}
-                name="primaryGoal"
-                render={({ field }) => (
-                  <FormItem className="space-y-3">
-                    <FormLabel>What is your primary goal?</FormLabel>
-                    <FormControl>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        className="space-y-1"
-                      >
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="analytics" />
-                          </FormControl>
-                          <FormLabel className="font-normal">
-                            Analyze customer data
-                          </FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="customer_support" />
-                          </FormControl>
-                          <FormLabel className="font-normal">
-                            Improve customer support
-                          </FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="marketing" />
-                          </FormControl>
-                          <FormLabel className="font-normal">
-                            Enhance marketing efforts
-                          </FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="other" />
-                          </FormControl>
-                          <FormLabel className="font-normal">
-                            Other
-                          </FormLabel>
-                        </FormItem>
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+        {/* Step 2: Preferences */}
+        {step === 2 && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="space-y-4"
+          >
+            <div className="space-y-3">
+              <label className="block text-sm font-medium">What is your primary goal?</label>
+              <RadioGroup
+                value={formData.primaryGoal}
+                onValueChange={(value) => handleInputChange("primaryGoal", value)}
+                className="space-y-1"
+              >
+                <div className="flex items-center space-x-3">
+                  <RadioGroupItem value="analytics" id="analytics" />
+                  <label htmlFor="analytics" className="text-sm">Analyze customer data</label>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <RadioGroupItem value="customer_support" id="customer_support" />
+                  <label htmlFor="customer_support" className="text-sm">Improve customer support</label>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <RadioGroupItem value="marketing" id="marketing" />
+                  <label htmlFor="marketing" className="text-sm">Enhance marketing efforts</label>
+                </div>
+              </RadioGroup>
+            </div>
+            <div className="space-y-2">
+              <label className="block text-sm font-medium">Team Size</label>
+              <Input
+                placeholder="e.g., 5-10"
+                value={formData.teamSize}
+                onChange={(e) => handleInputChange("teamSize", e.target.value)}
+                required
               />
-              <FormField
-                control={form.control}
-                name="teamSize"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Team Size</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select team size" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="1-10">1-10 employees</SelectItem>
-                        <SelectItem value="11-50">11-50 employees</SelectItem>
-                        <SelectItem value="51-200">51-200 employees</SelectItem>
-                        <SelectItem value="201-500">201-500 employees</SelectItem>
-                        <SelectItem value="500+">500+ employees</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </motion.div>
-          )}
+            </div>
+          </motion.div>
+        )}
 
-          {/* Step 3: Final Steps */}
-          {step === 3 && (
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="space-y-4"
-            >
-              <FormField
-                control={form.control}
-                name="bio"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Bio</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Tell us a bit about yourself..."
-                        className="resize-none"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      This will be displayed on your profile
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
+        {/* Step 3: Final Steps */}
+        {step === 3 && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="space-y-4"
+          >
+            <div className="space-y-2">
+              <label className="block text-sm font-medium">Bio</label>
+              <Textarea
+                placeholder="Tell us a bit about yourself..."
+                value={formData.bio}
+                onChange={(e) => handleInputChange("bio", e.target.value)}
+                className="resize-none"
               />
-              <FormField
-                control={form.control}
-                name="interests"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Interests</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Analytics, Customer Support, AI..." 
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Help us tailor content to your interests
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
+              <p className="text-sm text-gray-500">This will be displayed on your profile</p>
+            </div>
+            <div className="space-y-2">
+              <label className="block text-sm font-medium">Interests</label>
+              <Input
+                placeholder="Analytics, Customer Support, AI..."
+                value={formData.interests}
+                onChange={(e) => handleInputChange("interests", e.target.value)}
               />
-            </motion.div>
-          )}
+              <p className="text-sm text-gray-500">Help us tailor content to your interests</p>
+            </div>
+          </motion.div>
+        )}
 
-          <div className="flex justify-between">
-            <Button 
-              type="button" 
-              variant="outline" 
+        <div className="flex justify-between pt-4">
+          {step > 1 && (
+            <Button
+              type="button"
+              variant="outline"
               onClick={prevStep}
-              disabled={step === 1 || isLoading}
-            >
-              Back
-            </Button>
-            <Button 
-              type="button" 
-              onClick={nextStep}
               disabled={isLoading}
             >
-              {isLoading
-                ? "Processing..."
-                : step === totalSteps
-                ? "Complete"
-                : "Next"}
+              Previous
             </Button>
-          </div>
-        </form>
-      </Form>
+          )}
+          <Button
+            type="button"
+            onClick={nextStep}
+            disabled={isLoading}
+            className={step === 1 ? "w-full" : ""}
+          >
+            {isLoading
+              ? "Processing..."
+              : step === totalSteps
+              ? "Complete Onboarding"
+              : "Continue"}
+          </Button>
+        </div>
+      </form>
     </div>
   );
 }
