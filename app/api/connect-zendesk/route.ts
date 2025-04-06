@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
 export async function POST(request: Request) {
@@ -61,59 +61,53 @@ export async function POST(request: Request) {
       );
     }
 
-    // Initialize Supabase client
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json(
-        { error: 'Server configuration error' },
-        { status: 500 }
-      );
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Get the user's session from cookie
+    // Get cookies for server-side Supabase client
     const cookieStore = cookies();
-    const sessionCookie = cookieStore.get('sb-access-token')?.value;
 
-    if (!sessionCookie) {
+    // Initialize Supabase client using createServerClient from @supabase/ssr
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value;
+          },
+          set(name: string, value: string, options: any) {
+            cookieStore.set({ name, value, ...options });
+          },
+          remove(name: string, options: any) {
+            cookieStore.delete({ name, ...options });
+          },
+        },
+      }
+    );
+
+    // Get the user from the session
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.user) {
       return NextResponse.json(
         { error: 'Not authenticated' },
         { status: 401 }
       );
     }
 
-    // Get user from session
-    const { data: { user }, error: getUserError } = await supabase.auth.getUser(sessionCookie);
-
-    if (getUserError || !user) {
-      return NextResponse.json(
-        { error: 'Authentication failed' },
-        { status: 401 }
-      );
-    }
-
     // Store Zendesk credentials in user metadata
-    const { error: updateError } = await supabase.auth.admin.updateUserById(
-      user.id,
-      {
-        user_metadata: {
-          ...user.user_metadata,
-          zendesk_connected: true,
-          zendesk_domain: cleanDomain,
-          zendesk_email: email,
-          // Store API key encrypted in production
-          zendesk_api_key: apiKey,
-        },
+    const { error: updateError } = await supabase.auth.updateUser({
+      data: {
+        zendesk_connected: true,
+        zendesk_domain: cleanDomain,
+        zendesk_email: email,
+        // Store API key encrypted in production
+        zendesk_api_key: apiKey,
       }
-    );
+    });
 
     if (updateError) {
       console.error('Error updating user metadata:', updateError);
       return NextResponse.json(
-        { error: 'Failed to save Zendesk credentials' },
+        { error: 'Failed to save Zendesk credentials: ' + updateError.message },
         { status: 500 }
       );
     }
@@ -125,7 +119,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Error connecting to Zendesk:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error: ' + (error instanceof Error ? error.message : String(error)) },
       { status: 500 }
     );
   }
