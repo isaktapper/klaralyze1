@@ -5,27 +5,7 @@ import { cookies } from 'next/headers';
 // Handle GET requests for zendesk groups
 export async function GET(request: Request) {
   try {
-    // Get query parameters from the URL
-    const url = new URL(request.url);
-    const subdomain = url.searchParams.get('subdomain');
-    const email = url.searchParams.get('email');
-    const apiKey = url.searchParams.get('apiKey');
-
-    // Validate inputs
-    if (!subdomain || !email || !apiKey) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
-    }
-
-    // Clean domain (remove https:// and trailing slashes if present)
-    const cleanDomain = subdomain.replace(/^https?:\/\//, '').replace(/\/$/, '');
-    
-    // Further clean domain by removing .zendesk.com if it exists
-    const domainForUrl = cleanDomain.replace(/\.zendesk\.com$/, '');
-
-    // Verify authentication
+    // Authentication check via Supabase
     const cookieStore = cookies();
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -45,6 +25,7 @@ export async function GET(request: Request) {
       }
     );
 
+    // Get user session
     const { data: { session } } = await supabase.auth.getSession();
     
     if (!session?.user) {
@@ -54,56 +35,51 @@ export async function GET(request: Request) {
       );
     }
 
-    // Fetch Zendesk groups
-    try {
-      console.log('Fetching Zendesk groups from:', {
-        url: `https://${domainForUrl}.zendesk.com/api/v2/groups.json`,
-        email
-      });
+    // Get Zendesk credentials from user metadata
+    const { zendesk_domain, zendesk_email, zendesk_api_key } = session.user.user_metadata || {};
 
-      const auth = Buffer.from(`${email}/token:${apiKey}`).toString('base64');
-      const response = await fetch(`https://${domainForUrl}.zendesk.com/api/v2/groups.json`, {
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${auth}`,
-        },
-      });
-
-      if (!response.ok) {
-        const responseText = await response.text();
-        console.error('Failed to fetch groups:', {
-          status: response.status,
-          text: responseText
-        });
-        return NextResponse.json(
-          { 
-            error: 'Failed to fetch Zendesk groups',
-            details: responseText
-          },
-          { status: response.status }
-        );
-      }
-
-      const data = await response.json();
-      console.log('Successfully fetched groups, count:', data.groups?.length);
-
-      return NextResponse.json(data, { status: 200 });
-    } catch (error) {
-      console.error('Error fetching Zendesk groups:', error);
+    if (!zendesk_domain || !zendesk_email || !zendesk_api_key) {
       return NextResponse.json(
-        { 
-          error: 'Error fetching Zendesk groups',
-          details: error instanceof Error ? error.message : String(error)
-        },
-        { status: 500 }
+        { error: 'Zendesk not connected' },
+        { status: 400 }
       );
     }
+
+    // Fetch groups from Zendesk
+    const auth = Buffer.from(`${zendesk_email}/token:${zendesk_api_key}`).toString('base64');
+    
+    const response = await fetch(`https://${zendesk_domain}.zendesk.com/api/v2/groups.json`, {
+      headers: {
+        'Authorization': `Basic ${auth}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error('Zendesk API error:', errorData);
+      return NextResponse.json(
+        { error: `Failed to fetch groups: ${response.statusText}` },
+        { status: response.status }
+      );
+    }
+
+    const data = await response.json();
+    
+    return NextResponse.json({
+      groups: data.groups.map((group: any) => ({
+        id: group.id,
+        name: group.name,
+        description: group.description,
+        created_at: group.created_at,
+        updated_at: group.updated_at,
+      }))
+    });
   } catch (error) {
-    console.error('Server error:', error);
+    console.error('Error fetching Zendesk groups:', error);
     return NextResponse.json(
       { 
-        error: 'Internal server error',
+        error: 'Failed to fetch Zendesk groups',
         details: error instanceof Error ? error.message : String(error)
       },
       { status: 500 }

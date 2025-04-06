@@ -1,109 +1,102 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { AlertCircle, CheckCircle, Link, RefreshCw, X } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
+import { ArrowRight, CheckCircle, Link as LinkIcon, X } from "lucide-react";
 
-interface ConnectionsCardProps {
-  connections: {
-    id: string;
-    name: string;
-    status: "connected" | "disconnected" | "error";
-    lastUpdated?: Date;
-    details?: string;
-  }[];
-}
+export function ConnectionsCard() {
+  const { user, updateUserMetadata, refreshUser } = useAuth();
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [zendeskDomain, setZendeskDomain] = useState(user?.user_metadata?.zendesk_domain || "");
+  const [zendeskEmail, setZendeskEmail] = useState(user?.user_metadata?.zendesk_email || "");
+  const [zendeskApiKey, setZendeskApiKey] = useState(user?.user_metadata?.zendesk_api_key || "");
+  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
+  
+  const isZendeskConnected = Boolean(user?.user_metadata?.zendesk_connected);
 
-export function ConnectionsCard({ connections }: ConnectionsCardProps) {
-  const router = useRouter();
-  const [reconnecting, setReconnecting] = useState<string | null>(null);
-  const [checking, setChecking] = useState<string | null>(null);
-  const [connectionStatus, setConnectionStatus] = useState<Record<string, "connected" | "disconnected" | "error">>({});
+  const handleConnectZendesk = async () => {
+    if (!zendeskDomain || !zendeskEmail || !zendeskApiKey) {
+      toast.error("Please fill in all Zendesk fields");
+      return;
+    }
 
-  const handleReconnect = (id: string) => {
-    setReconnecting(id);
-    
-    if (id === "zendesk") {
-      router.push("/connect-zendesk");
+    setIsConnecting(true);
+    try {
+      // Test the connection first
+      const checkResponse = await fetch("/api/verify-zendesk-credentials", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          domain: zendeskDomain,
+          email: zendeskEmail,
+          apiKey: zendeskApiKey,
+        }),
+      });
+
+      if (!checkResponse.ok) {
+        const error = await checkResponse.json();
+        throw new Error(error.message || "Failed to verify Zendesk credentials");
+      }
+
+      // If verification successful, update user metadata
+      await updateUserMetadata({
+        zendesk_domain: zendeskDomain,
+        zendesk_email: zendeskEmail,
+        zendesk_api_key: zendeskApiKey,
+        zendesk_connected: true,
+      });
+
+      await refreshUser();
+      toast.success("Zendesk connected successfully!");
+    } catch (error) {
+      console.error("Error connecting Zendesk:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to connect Zendesk");
+    } finally {
+      setIsConnecting(false);
     }
   };
 
-  const checkConnectionStatus = async (id: string) => {
-    setChecking(id);
-    
+  const handleDisconnectZendesk = async () => {
     try {
-      const response = await fetch('/api/connections/check', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ connectionType: id }),
+      await updateUserMetadata({
+        zendesk_domain: "",
+        zendesk_email: "",
+        zendesk_api_key: "",
+        zendesk_connected: false,
       });
       
-      const data = await response.json();
-      
-      if (response.ok) {
-        if (data.status === 'connected') {
-          setConnectionStatus(prev => ({ ...prev, [id]: 'connected' }));
-          toast.success(`${id} connection checked successfully`);
-        } else if (data.status === 'error') {
-          setConnectionStatus(prev => ({ ...prev, [id]: 'error' }));
-          toast.error(`Connection error: ${data.message}`);
-        } else {
-          setConnectionStatus(prev => ({ ...prev, [id]: 'disconnected' }));
-          toast.error(`${id} is disconnected: ${data.message}`);
-        }
-      } else {
-        setConnectionStatus(prev => ({ ...prev, [id]: 'error' }));
-        toast.error(`Failed to check ${id} connection: ${data.error || 'Unknown error'}`);
-      }
+      await refreshUser();
+      setZendeskDomain("");
+      setZendeskEmail("");
+      setZendeskApiKey("");
+      toast.success("Zendesk disconnected");
     } catch (error) {
-      console.error(`Error checking ${id} connection:`, error);
-      setConnectionStatus(prev => ({ ...prev, [id]: 'error' }));
-      toast.error(`Failed to check ${id} connection`);
-    } finally {
-      setChecking(null);
-      // Force refresh to get updated user metadata
-      router.refresh();
+      console.error("Error disconnecting Zendesk:", error);
+      toast.error("Failed to disconnect Zendesk");
     }
   };
 
-  const getStatusBadge = (id: string, status: string) => {
-    // If we have a checked status, use that instead
-    const actualStatus = connectionStatus[id] || status;
-    
-    switch (actualStatus) {
-      case "connected":
-        return (
-          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-            <CheckCircle className="w-3 h-3 mr-1" />
-            Connected
-          </Badge>
-        );
-      case "disconnected":
-        return (
-          <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
-            <X className="w-3 h-3 mr-1" />
-            Disconnected
-          </Badge>
-        );
-      case "error":
-        return (
-          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-            <AlertCircle className="w-3 h-3 mr-1" />
-            Error
-          </Badge>
-        );
-      default:
-        return (
-          <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
-            Unknown
-          </Badge>
-        );
+  const handleCheckStatus = async () => {
+    setIsCheckingStatus(true);
+    try {
+      const response = await fetch("/api/check-zendesk-status");
+      const data = await response.json();
+      
+      if (data.connected) {
+        toast.success("Zendesk connection is active!");
+      } else {
+        toast.error("Zendesk connection failed. Please check your credentials.");
+      }
+    } catch (error) {
+      console.error("Error checking Zendesk status:", error);
+      toast.error("Failed to check Zendesk status");
+    } finally {
+      setIsCheckingStatus(false);
     }
   };
 
@@ -111,90 +104,106 @@ export function ConnectionsCard({ connections }: ConnectionsCardProps) {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center">
-          <Link className="w-4 h-4 mr-2" />
+          <LinkIcon className="mr-2 h-5 w-5" />
           Connections
         </CardTitle>
         <CardDescription>
           Manage your external service connections
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-6">
         <div className="space-y-4">
-          {connections.length === 0 ? (
-            <div className="text-center py-6 text-muted-foreground">
-              No connections configured
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-medium">Zendesk</h3>
+              <p className="text-sm text-muted-foreground">
+                {isZendeskConnected 
+                  ? `Connected to ${user?.user_metadata?.zendesk_domain}.zendesk.com` 
+                  : "Zendesk integration is not configured"}
+              </p>
             </div>
-          ) : (
-            <div className="space-y-4">
-              {connections.map((connection) => (
-                <div 
-                  key={connection.id}
-                  className="flex items-center justify-between p-4 border rounded-lg"
-                >
-                  <div className="space-y-1">
-                    <div className="font-medium">{connection.name}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {connection.details || 
-                        (connection.status === "connected" 
-                          ? "Connection active and working properly" 
-                          : "Connection not established")}
-                    </div>
-                    {connection.lastUpdated && (
-                      <div className="text-xs text-muted-foreground">
-                        Last updated: {connection.lastUpdated.toLocaleDateString()}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3">
-                    {getStatusBadge(connection.id, connection.status)}
-                    
-                    <div className="flex gap-2">
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => checkConnectionStatus(connection.id)}
-                        disabled={checking === connection.id}
-                      >
-                        {checking === connection.id ? (
-                          <>
-                            <RefreshCw className="h-3 w-3 mr-2 animate-spin" />
-                            Checking...
-                          </>
-                        ) : (
-                          "Check Status"
-                        )}
-                      </Button>
-                      
-                      <Button 
-                        size="sm" 
-                        variant={connectionStatus[connection.id] === "connected" || connection.status === "connected" ? "outline" : "default"}
-                        onClick={() => handleReconnect(connection.id)}
-                        disabled={reconnecting === connection.id}
-                      >
-                        {reconnecting === connection.id ? (
-                          <>
-                            <RefreshCw className="h-3 w-3 mr-2 animate-spin" />
-                            Reconnecting...
-                          </>
-                        ) : (
-                          connectionStatus[connection.id] === "connected" || connection.status === "connected" ? "Reconnect" : "Connect"
-                        )}
-                      </Button>
-                    </div>
+            <div className="flex items-center">
+              {isZendeskConnected ? (
+                <>
+                  <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
+                  <span className="text-sm font-medium text-green-500 mr-2">Connected</span>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={handleCheckStatus}
+                    disabled={isCheckingStatus}
+                  >
+                    Check Status
+                  </Button>
+                </>
+              ) : (
+                <X className="h-5 w-5 text-red-500 mr-2" />
+              )}
+              <span className="ml-2 text-xs bg-gray-100 px-2 py-1 rounded-full">
+                {isZendeskConnected ? "Connected" : "Disconnected"}
+              </span>
+            </div>
+          </div>
+
+          {!isZendeskConnected && (
+            <div className="space-y-3">
+              <div className="grid gap-2">
+                <Label htmlFor="zendesk-domain">Zendesk Domain</Label>
+                <div className="flex">
+                  <Input
+                    id="zendesk-domain"
+                    placeholder="yourdomain"
+                    className="rounded-r-none"
+                    value={zendeskDomain}
+                    onChange={(e) => setZendeskDomain(e.target.value)}
+                  />
+                  <div className="flex items-center border border-l-0 border-input bg-muted px-3 rounded-r-md text-sm text-muted-foreground">
+                    .zendesk.com
                   </div>
                 </div>
-              ))}
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="zendesk-email">Email</Label>
+                <Input
+                  id="zendesk-email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={zendeskEmail}
+                  onChange={(e) => setZendeskEmail(e.target.value)}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="zendesk-api-key">API Token</Label>
+                <Input
+                  id="zendesk-api-key"
+                  type="password"
+                  placeholder="API Token from Zendesk Admin"
+                  value={zendeskApiKey}
+                  onChange={(e) => setZendeskApiKey(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  You can find your API token in the Zendesk Admin panel under Settings &gt; API
+                </p>
+              </div>
             </div>
           )}
-          <Button 
-            variant="outline" 
-            className="w-full mt-4"
-            onClick={() => router.push("/connect-zendesk")}
-          >
-            Add New Connection
-          </Button>
         </div>
       </CardContent>
+      <CardFooter className="flex justify-between">
+        {isZendeskConnected ? (
+          <Button variant="destructive" onClick={handleDisconnectZendesk}>
+            Disconnect Zendesk
+          </Button>
+        ) : (
+          <Button
+            onClick={handleConnectZendesk}
+            disabled={isConnecting || !zendeskDomain || !zendeskEmail || !zendeskApiKey}
+          >
+            {isConnecting ? "Connecting..." : "Connect Zendesk"}
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        )}
+      </CardFooter>
     </Card>
   );
 } 

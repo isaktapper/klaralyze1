@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
+import React from 'react'
 import { User, AuthResponse, AuthError } from '@supabase/supabase-js'
 import { supabase } from './supabase'
 import { useRouter } from 'next/navigation'
@@ -13,6 +14,9 @@ type AuthContextType = {
   signUp: (email: string, password: string) => Promise<{ data: any; error: any }>
   signIn: (email: string, password: string) => Promise<{ data: any; error: any }>
   signOut: () => Promise<void>
+  updateUserMetadata: (metadata: Record<string, any>) => Promise<void>
+  refreshUser: () => Promise<void>
+  isLoading: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -109,13 +113,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const updateUserMetadata = async (metadata: Record<string, any>) => {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: metadata,
+      });
+
+      if (error) {
+        console.error('Error updating user metadata:', error);
+        throw error;
+      }
+    } catch (error) {
+      console.error('Error updating user metadata:', error);
+      throw error;
+    }
+  }
+
+  const refreshUser = async () => {
+    try {
+      const { data } = await supabase.auth.refreshSession();
+      if (data.user) {
+        setUser(data.user);
+        setIsVerified(data.user.email_confirmed_at !== null);
+      }
+    } catch (error) {
+      console.error('Error refreshing user data:', error);
+    }
+  }
+
   const value = {
     user,
     loading,
     isVerified,
     signUp,
     signIn,
-    signOut
+    signOut,
+    updateUserMetadata,
+    refreshUser,
+    isLoading: loading
   }
 
   return (

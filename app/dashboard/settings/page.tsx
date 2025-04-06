@@ -64,12 +64,13 @@ export default function SettingsPage() {
         <div className="flex flex-col space-y-1.5">
           <h2 className="text-3xl font-bold tracking-tight">Settings</h2>
           <p className="text-muted-foreground">
-            Manage your account and preferences
+            Manage your account settings and connections
           </p>
         </div>
 
-        {/* Add the ConnectionsCard at the top */}
-        <ConnectionsCard connections={connections} />
+        <div className="grid gap-6 md:grid-cols-2">
+          <ConnectionsCard />
+        </div>
 
         <div className="grid gap-6 md:grid-cols-2">
           {/* Profile Settings */}
