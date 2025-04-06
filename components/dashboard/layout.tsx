@@ -66,15 +66,16 @@ export default function DashboardLayout({ children, isGuiding }: { children: Rea
           </div>
         </div>
       )}
-      <div className="flex h-screen overflow-hidden">
+      <div className="flex h-screen">
         {/* Sidebar */}
-        <div
+        <div 
           className={cn(
-            "bg-slate-900 flex flex-col transition-all duration-300",
-            isGuiding || isHovered ? "w-64" : "w-20"
+            "fixed left-0 top-0 z-50 h-screen transition-all duration-300",
+            isGuiding || isHovered ? "w-64" : "w-16",
+            "bg-[#026EE6]"
           )}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
+          onMouseEnter={() => !isGuiding && setIsHovered(true)}
+          onMouseLeave={() => !isGuiding && setIsHovered(false)}
         >
           {/* Logo */}
           <div className="h-16 flex items-center justify-center">
@@ -85,6 +86,7 @@ export default function DashboardLayout({ children, isGuiding }: { children: Rea
                 width={isGuiding || isHovered ? 32 : 40}
                 height={isGuiding || isHovered ? 32 : 40}
                 className="transition-all duration-300"
+                style={{ filter: 'brightness(0) invert(1)' }}
               />
               <Image
                 src="/klaralyze_text.svg"
@@ -95,6 +97,7 @@ export default function DashboardLayout({ children, isGuiding }: { children: Rea
                   "ml-2 transition-all duration-300",
                   isGuiding || isHovered ? "opacity-100" : "opacity-0"
                 )}
+                style={{ filter: 'brightness(0) invert(1)' }}
               />
             </Link>
           </div>
