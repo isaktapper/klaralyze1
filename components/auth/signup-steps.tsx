@@ -339,11 +339,10 @@ export function SignUpSteps() {
 
       // Show success message
       toast.success('Account created successfully!');
-      setShowSuccess(true);
       
-      // Redirect to dashboard
-      console.log('Redirecting to dashboard...');
-      router.push('/dashboard');
+      // Redirect to verify email page
+      console.log('Redirecting to verify email page...');
+      router.push('/auth/verify-email');
     } catch (error) {
       console.error('Error in signup process:', error);
       toast.error('Failed to create account. Please try again.');
