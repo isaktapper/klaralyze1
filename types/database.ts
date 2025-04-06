@@ -69,6 +69,7 @@ export type ZendeskTicket = {
   full_resolution_time_minutes: number | null
   tags: string[]
   custom_fields: Record<string, any>
+  comments?: any[]
 }
 
 export type ZendeskAgent = {
