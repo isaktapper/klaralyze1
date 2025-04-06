@@ -157,76 +157,26 @@ export function GuidedTour({ onClose, onGuidingChange }: { onClose: () => void, 
   };
 
   return (
-    <div className="fixed inset-0 z-50">
-      {/* Semi-transparent overlay with spotlight */}
-      <div 
-        className="absolute inset-0 bg-black/60 transition-opacity duration-300"
-        onClick={handleSkip}
-      >
-        {targetElement && (
-          <div
-            className="absolute bg-transparent"
-            style={{
-              top: targetElement.top - 8,
-              left: targetElement.left - 8,
-              width: targetElement.width + 16,
-              height: targetElement.height + 16,
-              boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.75), 0 0 15px rgba(2, 110, 230, 0.5)',
-              borderRadius: '8px',
-              border: '2px solid #026EE6'
-            }}
-          />
-        )}
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-xl w-[90vw] max-w-4xl h-[90vh] max-h-[800px] overflow-hidden">
+        <div className="flex flex-col h-full">
+          <div className="flex items-center justify-between p-4 border-b">
+            <h2 className="text-xl font-semibold">Welcome to Klaralyze</h2>
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-6">
+            {/* ... existing content ... */}
+          </div>
+          <div className="p-4 border-t">
+            {/* ... existing buttons ... */}
+          </div>
+        </div>
       </div>
-
-      {/* Tooltip */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        transition={{ duration: 0.2 }}
-        className="absolute w-[300px] rounded-xl bg-white p-4 shadow-xl"
-        style={getTooltipPosition()}
-      >
-        <div className="mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-            {currentStep === 0 && <SparklesIcon className="w-5 h-5 text-[#026EE6]" />}
-            {tourSteps[currentStep].title}
-          </h3>
-          <p className="mt-1 text-sm text-gray-600">
-            {tourSteps[currentStep].description}
-          </p>
-        </div>
-
-        <div className="flex items-center justify-between">
-          <div className="flex space-x-2">
-            {tourSteps.map((_, index) => (
-              <div
-                key={index}
-                className={`h-1.5 w-6 rounded-full transition-colors ${
-                  index === currentStep ? 'bg-[#026EE6]' : 'bg-gray-200'
-                }`}
-              />
-            ))}
-          </div>
-
-          <div className="flex space-x-3">
-            <button
-              onClick={handleSkip}
-              className="text-sm text-gray-600 hover:text-gray-900"
-            >
-              Skip
-            </button>
-            <button
-              onClick={handleNext}
-              className="flex items-center space-x-2 rounded-lg bg-[#026EE6] px-4 py-1.5 text-sm font-medium text-white hover:bg-[#0256B4]"
-            >
-              <span>{currentStep === tourSteps.length - 1 ? 'Finish' : 'Next'}</span>
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      </motion.div>
     </div>
   );
 } 

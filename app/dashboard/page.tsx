@@ -8,19 +8,21 @@ import { PerformanceMetrics } from "@/components/dashboard/performance-metrics";
 import { FrequentInsights } from "@/components/dashboard/frequent-insights";
 import { GuidedTour } from '@/components/onboarding/GuidedTour';
 import { Button } from "@/components/ui/button";
-import { PlayCircle } from 'lucide-react';
+import { PlayCircle, Plus } from 'lucide-react';
+import { UserStats } from '@/components/dashboard/user-stats';
+import { useRouter } from 'next/navigation';
 
 export default function DashboardPage() {
-  const [showTour, setShowTour] = useState(true);
+  const router = useRouter();
+  const [showTour, setShowTour] = useState(false);
   const [isGuiding, setIsGuiding] = useState(false);
 
   useEffect(() => {
     // Check if this is the first visit
-    const onboardingComplete = localStorage.getItem('onboardingComplete');
-    if (!onboardingComplete) {
-      // Small delay to ensure components are mounted
-      const timer = setTimeout(() => setShowTour(true), 500);
-      return () => clearTimeout(timer);
+    const hasSeenTour = localStorage.getItem('hasSeenTour');
+    if (!hasSeenTour) {
+      setShowTour(true);
+      localStorage.setItem('hasSeenTour', 'true');
     }
   }, []);
 
@@ -35,15 +37,26 @@ export default function DashboardPage() {
                 Key metrics and insights for your support operations
               </p>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowTour(true)}
-              className="flex items-center gap-2"
-            >
-              <PlayCircle className="h-4 w-4" />
-              Take the Tour
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push('/org/your-org/connect-zendesk')}
+                className="flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Connect Zendesk
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowTour(true)}
+                className="flex items-center gap-2"
+              >
+                <PlayCircle className="h-4 w-4" />
+                Take the Tour
+              </Button>
+            </div>
           </div>
           
           {/* Key Metrics */}
@@ -102,13 +115,14 @@ export default function DashboardPage() {
         </div>
       </DashboardLayout>
 
-      {/* Guided Tour */}
       {showTour && (
         <GuidedTour
           onClose={() => setShowTour(false)}
           onGuidingChange={setIsGuiding}
         />
       )}
+
+      <UserStats />
     </div>
   );
 } 

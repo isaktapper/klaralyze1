@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Plus, Settings, HelpCircle, User, LogOut, Users, LayoutDashboard, BarChart3, Lightbulb } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
 import Image from "next/image";
+import { useAuth } from '@/lib/auth';
+import { useRouter } from 'next/navigation';
 
 const navigation = [
   { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
@@ -23,6 +25,13 @@ const bottomNavigation = [
 
 export default function DashboardLayout({ children, isGuiding }: { children: React.ReactNode, isGuiding?: boolean }) {
   const pathname = usePathname();
+  const { signOut } = useAuth();
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push('/');
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -126,6 +135,14 @@ export default function DashboardLayout({ children, isGuiding }: { children: Rea
             </div>
           </div>
         </div>
+
+        <button
+          onClick={handleSignOut}
+          className="flex items-center space-x-2 text-gray-600 hover:text-gray-900"
+        >
+          <LogOut className="h-5 w-5" />
+          <span>Sign Out</span>
+        </button>
       </div>
 
       {/* Main content */}

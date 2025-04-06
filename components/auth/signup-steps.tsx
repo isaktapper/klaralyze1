@@ -279,7 +279,7 @@ export function SignUpSteps() {
           .from('profiles')
           .insert({
             id: authData.user?.id,
-            name: formData.name,
+            full_name: formData.name,
             email: formData.email,
             job_title: formData.jobTitle === 'Other' ? formData.otherJobTitle : formData.jobTitle,
             company: formData.company,
