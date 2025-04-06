@@ -246,14 +246,12 @@ export default function ConnectZendeskPage() {
                 />
                 <div className="mt-2">
                   <Collapsible open={showApiKeyHelp} onOpenChange={setShowApiKeyHelp}>
-                    <CollapsibleTrigger asChild>
-                      <Button variant="ghost" size="sm" className="flex items-center gap-2 text-sm text-blue-600">
-                        {showApiKeyHelp ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                        <span className="flex items-center gap-1">
-                          <HelpCircle className="h-4 w-4" />
-                          How to get your API key
-                        </span>
-                      </Button>
+                    <CollapsibleTrigger className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700">
+                      {showApiKeyHelp ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      <span className="flex items-center gap-1">
+                        <HelpCircle className="h-4 w-4" />
+                        How to get your API key
+                      </span>
                     </CollapsibleTrigger>
                     <CollapsibleContent className="mt-2 text-sm text-gray-600 space-y-2">
                       <p>To get your API key:</p>
