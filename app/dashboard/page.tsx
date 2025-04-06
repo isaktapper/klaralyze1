@@ -18,12 +18,15 @@ export default function DashboardPage() {
   const searchParams = useSearchParams();
   const { user } = useAuth();
   const [showZendeskModal, setShowZendeskModal] = useState(false);
-  const hasZendeskConnection = user?.user_metadata?.zendesk_connected || false;
+  
+  // IMPORTANT: Force hasZendeskConnection to false for now to ensure button appears
+  const hasZendeskConnection = false; // Override until fixed
   
   // Log user data to debug
   useEffect(() => {
     if (user) {
       console.log('User metadata:', user.user_metadata);
+      console.log('Zendesk connected status:', user?.user_metadata?.zendesk_connected);
     }
   }, [user]);
   
@@ -49,23 +52,9 @@ export default function DashboardPage() {
     setIsConnecting(true);
 
     try {
-      // TODO: Add your API endpoint to handle Zendesk connection
-      const response = await fetch('/api/connect-zendesk', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(zendeskForm),
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to connect to Zendesk');
-      }
-
-      // Close modal and refresh page to show connected state
-      setShowZendeskModal(false);
-      router.refresh();
+      // Redirect to the multi-step flow instead
+      router.push('/connect-zendesk');
+      return;
     } catch (err) {
       setError('Failed to connect to Zendesk. Please check your credentials.');
     } finally {
@@ -114,8 +103,8 @@ export default function DashboardPage() {
             </div>
           )}
           
-          {/* Content sections */}
-          {hasZendeskConnection && (
+          {/* Content sections - HIDDEN for now since zendesk isn't connected */}
+          {false && (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               <TicketStats />
               <RecentActivity />
@@ -205,7 +194,8 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <UserStats />
+      {/* Hide user stats too until connected */}
+      {false && <UserStats />}
     </div>
   );
 } 
