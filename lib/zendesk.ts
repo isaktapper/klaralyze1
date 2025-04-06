@@ -12,7 +12,7 @@ export class ZendeskAPI {
   }
 
   private async request(endpoint: string, options: RequestInit = {}) {
-    const url = `https://${this.domain}/api/v2/${endpoint}`
+    const url = `https://${this.domain}.zendesk.com/api/v2/${endpoint}`
     const auth = Buffer.from(`${this.email}/token:${this.apiToken}`).toString('base64')
 
     const response = await fetch(url, {
@@ -25,7 +25,8 @@ export class ZendeskAPI {
     })
 
     if (!response.ok) {
-      throw new Error(`Zendesk API error: ${response.statusText}`)
+      console.error(`Zendesk API error (${response.status}): ${response.statusText}`)
+      throw new Error(`Zendesk API error: ${response.statusText} (${response.status})`)
     }
 
     return response.json()
@@ -76,27 +77,40 @@ export class ZendeskAPI {
   }
 
   async getFilteredTickets(startTime?: Date, groupIds: number[] = []): Promise<ZendeskTicket[]> {
-    // Base query to get tickets with Open, Pending, and Solved statuses
-    let endpoint = 'search.json?query=status:open status:pending status:solved'
-    
-    // Add time filter if provided
-    if (startTime) {
-      endpoint += ` created>${startTime.toISOString()}`
+    try {
+      // Base query to get tickets with Open, Pending, and Solved statuses
+      let endpoint = 'search.json?query=status:open status:pending status:solved';
+      
+      // Add time filter if provided
+      if (startTime) {
+        endpoint += ` created>${startTime.toISOString()}`;
+      }
+      
+      // Add group filter if provided
+      if (groupIds.length > 0) {
+        const groupFilter = groupIds.map(id => `group_id:${id}`).join(' OR ');
+        endpoint += ` (${groupFilter})`;
+      }
+      
+      console.log('Zendesk search endpoint:', endpoint);
+      console.log('Using domain:', this.domain);
+      
+      // Include ticket metrics in response
+      endpoint += '&include=metric_sets';
+      
+      const response = await this.request(endpoint);
+      console.log(`Retrieved ${response.results?.length || 0} tickets from Zendesk search`);
+      
+      if (!response.results) {
+        console.error('Unexpected response format:', response);
+        return [];
+      }
+      
+      return response.results.map(this.transformTicket);
+    } catch (error) {
+      console.error('Error in getFilteredTickets:', error);
+      return [];
     }
-    
-    // Add group filter if provided
-    if (groupIds.length > 0) {
-      const groupFilter = groupIds.map(id => `group_id:${id}`).join(' OR ')
-      endpoint += ` (${groupFilter})`
-    }
-    
-    console.log('Zendesk search query:', endpoint)
-    
-    // Include ticket metrics in response
-    endpoint += '&include=metric_sets'
-    
-    const response = await this.request(endpoint)
-    return response.results.map(this.transformTicket)
   }
 
   async getAgents(): Promise<ZendeskAgent[]> {
@@ -109,7 +123,10 @@ export class ZendeskAPI {
     return response.ticket_metric
   }
 
-  private transformTicket(ticket: any): Partial<ZendeskTicket> {
+  private transformTicket = (ticket: any): Partial<ZendeskTicket> => {
+    // Check if metric_sets is available (from search endpoint)
+    const metrics = ticket.metric_sets ? ticket.metric_sets : ticket.metrics;
+    
     return {
       ticket_id: ticket.id,
       subject: ticket.subject,
@@ -123,9 +140,9 @@ export class ZendeskAPI {
       solved_date: ticket.solved_at,
       tags: ticket.tags,
       custom_fields: ticket.custom_fields,
-      first_response_time_minutes: ticket.metric?.reply_time_in_minutes?.calendar,
-      full_resolution_time_minutes: ticket.metric?.full_resolution_time_in_minutes?.calendar
-    }
+      first_response_time_minutes: metrics?.reply_time_in_minutes?.calendar,
+      full_resolution_time_minutes: metrics?.full_resolution_time_in_minutes?.calendar
+    };
   }
 
   private transformAgent(user: any): Partial<ZendeskAgent> {

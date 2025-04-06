@@ -45,6 +45,8 @@ export async function GET(request: Request) {
       );
     }
 
+    console.log('Fetching Zendesk groups from domain:', zendesk_domain);
+    
     // Fetch groups from Zendesk
     const auth = Buffer.from(`${zendesk_email}/token:${zendesk_api_key}`).toString('base64');
     
@@ -65,15 +67,15 @@ export async function GET(request: Request) {
     }
 
     const data = await response.json();
+    console.log('Successfully retrieved groups:', data.groups?.length || 0);
     
+    // Only return essential group data
     return NextResponse.json({
-      groups: data.groups.map((group: any) => ({
+      groups: Array.isArray(data.groups) ? data.groups.map((group: any) => ({
         id: group.id,
         name: group.name,
-        description: group.description,
-        created_at: group.created_at,
-        updated_at: group.updated_at,
-      }))
+        description: group.description || '',
+      })) : []
     });
   } catch (error) {
     console.error('Error fetching Zendesk groups:', error);

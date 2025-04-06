@@ -1,158 +1,131 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface Group {
   id: number;
   name: string;
+  description?: string;
 }
 
 interface ZendeskGroupsSelectorProps {
-  onGroupsSelected: (groups: number[]) => void;
   selectedGroups: number[];
+  onGroupsSelected: (groupIds: number[]) => void;
 }
 
-export function ZendeskGroupsSelector({ onGroupsSelected, selectedGroups }: ZendeskGroupsSelectorProps) {
+export function ZendeskGroupsSelector({
+  selectedGroups,
+  onGroupsSelected,
+}: ZendeskGroupsSelectorProps) {
   const [groups, setGroups] = useState<Group[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isExpanded, setIsExpanded] = useState(false);
 
-  // Fetch Zendesk groups on component mount
   useEffect(() => {
     fetchGroups();
   }, []);
 
   const fetchGroups = async () => {
-    setIsLoading(true);
+    setLoading(true);
     setError(null);
     
     try {
-      const response = await fetch('/api/zendesk-groups');
+      console.log('Fetching Zendesk groups from API');
+      const response = await fetch("/api/zendesk-groups");
       
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to fetch Zendesk groups');
+        const errorData = await response.json();
+        console.error('Error fetching groups:', errorData);
+        throw new Error(errorData.error || 'Failed to fetch Zendesk groups');
       }
       
       const data = await response.json();
-      setGroups(data.groups || []);
+      console.log('Groups data received:', data);
+      
+      if (!data.groups || !Array.isArray(data.groups)) {
+        throw new Error('Invalid group data format received');
+      }
+      
+      setGroups(data.groups);
     } catch (err) {
-      console.error('Error fetching Zendesk groups:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch Zendesk groups');
+      console.error('Error in fetchGroups:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load groups');
       toast.error('Failed to load Zendesk groups');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  const handleGroupToggle = (groupId: number) => {
-    const updatedGroups = selectedGroups.includes(groupId)
-      ? selectedGroups.filter(id => id !== groupId)
-      : [...selectedGroups, groupId];
-    
-    onGroupsSelected(updatedGroups);
+  const toggleGroup = (groupId: number) => {
+    if (selectedGroups.includes(groupId)) {
+      onGroupsSelected(selectedGroups.filter((id) => id !== groupId));
+    } else {
+      onGroupsSelected([...selectedGroups, groupId]);
+    }
   };
 
-  const handleSelectAll = () => {
-    onGroupsSelected(groups.map(group => group.id));
+  const selectAll = () => {
+    onGroupsSelected(groups.map((group) => group.id));
   };
 
-  const handleClearAll = () => {
+  const clearAll = () => {
     onGroupsSelected([]);
   };
 
   return (
     <Card>
       <CardHeader className="pb-3">
-        <div className="flex justify-between items-center">
-          <CardTitle className="text-sm font-medium">
-            Zendesk Groups
-          </CardTitle>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => setIsExpanded(!isExpanded)}
-          >
-            {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        <CardTitle className="text-sm font-medium">Zendesk Groups</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="flex justify-between mb-3">
+          <Button variant="ghost" size="sm" onClick={selectAll} disabled={loading || groups.length === 0}>
+            Select All
+          </Button>
+          <Button variant="ghost" size="sm" onClick={clearAll} disabled={loading || selectedGroups.length === 0}>
+            Clear
           </Button>
         </div>
-        <CardDescription>
-          {selectedGroups.length === 0
-            ? "All groups (unfiltered)"
-            : `${selectedGroups.length} group${selectedGroups.length === 1 ? '' : 's'} selected`
-          }
-        </CardDescription>
-      </CardHeader>
-      
-      {isExpanded && (
-        <CardContent>
-          {isLoading ? (
-            <div className="flex justify-center py-4">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            </div>
-          ) : error ? (
-            <div className="text-sm text-red-500 py-2">
-              {error}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={fetchGroups}
-                className="mt-2 w-full"
-              >
-                <RefreshCw className="mr-2 h-3 w-3" /> Try Again
-              </Button>
-            </div>
-          ) : (
-            <>
-              <div className="flex justify-between mb-3">
-                <Button variant="outline" size="sm" onClick={handleSelectAll}>
-                  Select All
-                </Button>
-                <Button variant="outline" size="sm" onClick={handleClearAll}>
-                  Clear All
-                </Button>
+        
+        {error && (
+          <div className="text-sm text-red-500 mb-2 p-2 bg-red-50 rounded">
+            {error}
+          </div>
+        )}
+        
+        {loading ? (
+          <div className="py-4 flex justify-center">
+            <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+          </div>
+        ) : groups.length === 0 ? (
+          <div className="text-sm text-gray-500 text-center py-4">
+            {error ? 'Unable to load groups' : 'No groups available'}
+          </div>
+        ) : (
+          <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
+            {groups.map((group) => (
+              <div key={group.id} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`group-${group.id}`}
+                  checked={selectedGroups.includes(group.id)}
+                  onCheckedChange={() => toggleGroup(group.id)}
+                />
+                <label
+                  htmlFor={`group-${group.id}`}
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                >
+                  {group.name}
+                </label>
               </div>
-              <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
-                {groups.map((group) => (
-                  <div key={group.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`group-${group.id}`}
-                      checked={selectedGroups.includes(group.id)}
-                      onCheckedChange={() => handleGroupToggle(group.id)}
-                    />
-                    <Label
-                      htmlFor={`group-${group.id}`}
-                      className="text-sm cursor-pointer flex-1"
-                    >
-                      {group.name}
-                    </Label>
-                  </div>
-                ))}
-                {groups.length === 0 && (
-                  <p className="text-sm text-muted-foreground text-center py-2">
-                    No groups found
-                  </p>
-                )}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={fetchGroups}
-                className="mt-3 w-full"
-              >
-                <RefreshCw className="mr-2 h-3 w-3" /> Refresh Groups
-              </Button>
-            </>
-          )}
-        </CardContent>
-      )}
+            ))}
+          </div>
+        )}
+      </CardContent>
     </Card>
   );
 } 

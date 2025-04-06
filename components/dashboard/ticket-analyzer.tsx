@@ -76,15 +76,20 @@ export function TicketAnalyzer({ className }: TicketAnalyzerProps) {
         params.append('groups', selectedGroups.join(','));
       }
       
+      const requestUrl = `/api/dashboard/tickets/filtered?${params.toString()}`;
+      console.log('Fetching tickets from:', requestUrl);
+      
       // Fetch tickets
-      const response = await fetch(`/api/dashboard/tickets/filtered?${params.toString()}`);
+      const response = await fetch(requestUrl);
       
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to fetch tickets');
+        const errorData = await response.json();
+        console.error('API Error Response:', errorData);
+        throw new Error(errorData.error || errorData.details || 'Failed to fetch tickets');
       }
       
       const data = await response.json();
+      console.log('Ticket data received:', data);
       
       // Update state with ticket data
       setTickets(data.tickets || []);

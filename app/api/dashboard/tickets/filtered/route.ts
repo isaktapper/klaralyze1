@@ -65,31 +65,42 @@ export async function GET(request: Request) {
     // Fetch tickets from Zendesk
     console.log('Fetching Zendesk tickets with params:', { fromDate, toDate, groups: groupIds });
     
-    let tickets = await zendesk.getFilteredTickets(startTime, groupIds);
-    
-    // If group filtering is applied
-    if (groupIds.length > 0) {
-      console.log(`Filtering tickets by ${groupIds.length} groups`);
-    }
-    
-    console.log(`Successfully fetched ${tickets.length} tickets from Zendesk`);
+    try {
+      let tickets = await zendesk.getFilteredTickets(startTime, groupIds);
+      
+      // If group filtering is applied
+      if (groupIds.length > 0) {
+        console.log(`Filtering tickets by ${groupIds.length} groups`);
+      }
+      
+      console.log(`Successfully fetched ${tickets.length} tickets from Zendesk`);
 
-    // Calculate ticket metrics by status
-    const ticketsByStatus = countTicketsByStatus(tickets);
-    
-    // Calculate resolution metrics
-    const resolvedTickets = tickets.filter(ticket => ticket.status === 'solved');
-    const avgResolutionTime = calculateAverageResolutionTime(resolvedTickets);
-    
-    return NextResponse.json({
-      total: tickets.length,
-      ticketsByStatus,
-      openTickets: ticketsByStatus.open || 0,
-      pendingTickets: ticketsByStatus.pending || 0,
-      solvedTickets: ticketsByStatus.solved || 0,
-      avgResolutionTime,
-      tickets: tickets
-    });
+      // Calculate ticket metrics by status
+      const ticketsByStatus = countTicketsByStatus(tickets);
+      
+      // Calculate resolution metrics
+      const resolvedTickets = tickets.filter(ticket => ticket.status === 'solved');
+      const avgResolutionTime = calculateAverageResolutionTime(resolvedTickets);
+      
+      return NextResponse.json({
+        total: tickets.length,
+        ticketsByStatus,
+        openTickets: ticketsByStatus.open || 0,
+        pendingTickets: ticketsByStatus.pending || 0,
+        solvedTickets: ticketsByStatus.solved || 0,
+        avgResolutionTime,
+        tickets: tickets
+      });
+    } catch (error) {
+      console.error('Error fetching tickets from Zendesk API:', error);
+      return NextResponse.json(
+        { 
+          error: 'Failed to fetch Zendesk ticket data',
+          details: error instanceof Error ? error.message : String(error)
+        },
+        { status: 500 }
+      );
+    }
 
   } catch (error) {
     console.error('Error fetching Zendesk tickets:', error);
