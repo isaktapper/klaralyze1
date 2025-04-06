@@ -244,25 +244,29 @@ export default function ConnectZendeskPage() {
                   onChange={(e) => setFormData(prev => ({ ...prev, apiKey: e.target.value }))}
                   placeholder="Enter your API key"
                 />
-                <Collapsible open={showApiKeyHelp} onOpenChange={setShowApiKeyHelp}>
-                  <CollapsibleTrigger className="flex items-center gap-2 text-sm text-blue-600 mt-2">
-                    {showApiKeyHelp ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                    <span className="flex items-center gap-1">
-                      <HelpCircle className="h-4 w-4" />
-                      Don't know where to find your API key?
-                    </span>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="mt-2 text-sm text-gray-600 bg-gray-50 p-4 rounded-lg">
-                    <ol className="list-decimal list-inside space-y-2">
-                      <li>Log in to your Zendesk account</li>
-                      <li>Click on the Admin icon (gear) in the sidebar</li>
-                      <li>Go to Channels {'>'} API</li>
-                      <li>Click on the "Add API token" button</li>
-                      <li>Give your token a description (e.g., "Klaralyze Integration")</li>
-                      <li>Copy the generated API token</li>
-                    </ol>
-                  </CollapsibleContent>
-                </Collapsible>
+                <div className="mt-2">
+                  <Collapsible open={showApiKeyHelp} onOpenChange={setShowApiKeyHelp}>
+                    <CollapsibleTrigger asChild>
+                      <Button variant="ghost" size="sm" className="flex items-center gap-2 text-sm text-blue-600">
+                        {showApiKeyHelp ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                        <span className="flex items-center gap-1">
+                          <HelpCircle className="h-4 w-4" />
+                          How to get your API key
+                        </span>
+                      </Button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="mt-2 text-sm text-gray-600 space-y-2">
+                      <p>To get your API key:</p>
+                      <ol className="list-decimal list-inside space-y-1">
+                        <li>Log in to your Zendesk account</li>
+                        <li>Go to Admin Center → Apps and Integrations → APIs</li>
+                        <li>Click the "Add API token" button</li>
+                        <li>Give your token a description (e.g., "Klaralyze Integration")</li>
+                        <li>Copy the generated API token</li>
+                      </ol>
+                    </CollapsibleContent>
+                  </Collapsible>
+                </div>
               </div>
             </div>
           )}
