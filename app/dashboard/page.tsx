@@ -12,6 +12,10 @@ import { Plus, X } from 'lucide-react';
 import { UserStats } from '@/components/dashboard/user-stats';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
+import { DateRangePicker } from '@/components/dashboard/date-range-picker';
+import { TicketsCountBox } from '@/components/dashboard/tickets-count-box';
+import { DateRange } from 'react-day-picker';
+import { subDays } from 'date-fns';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -21,8 +25,14 @@ export default function DashboardPage() {
   
   // TEMPORARY OVERRIDE: Always show the connect button and hide data
   // When testing is complete, remove this override and use the commented line below
-  const hasZendeskConnection = false;
+  const hasZendeskConnection = true; // Changed to true for testing
   // const hasZendeskConnection = user?.user_metadata?.zendesk_connected || false;
+  
+  // Date range state
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: subDays(new Date(), 30),
+    to: new Date(),
+  });
   
   // Log user data to debug
   useEffect(() => {
@@ -88,6 +98,16 @@ export default function DashboardPage() {
             )}
           </div>
           
+          {/* Date Range Picker - Only show when connected */}
+          {hasZendeskConnection && (
+            <div className="w-full max-w-sm">
+              <DateRangePicker
+                dateRange={dateRange}
+                onDateRangeChange={setDateRange}
+              />
+            </div>
+          )}
+          
           {/* No data state */}
           {!hasZendeskConnection && (
             <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -105,7 +125,51 @@ export default function DashboardPage() {
             </div>
           )}
           
-          {/* Content sections - ONLY SHOW WHEN ZENDESK IS CONNECTED */}
+          {/* Tickets Count Box - Only show when connected */}
+          {hasZendeskConnection && (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+              <TicketsCountBox 
+                count={1248} 
+                change={{
+                  value: 148,
+                  percentage: 12,
+                  timeframe: "previous period"
+                }}
+              />
+              <TicketsCountBox 
+                count={42} 
+                title="Open Tickets"
+                description="Tickets awaiting response"
+                change={{
+                  value: -4,
+                  percentage: 8,
+                  timeframe: "previous period"
+                }}
+              />
+              <TicketsCountBox 
+                count={982} 
+                title="Resolved Tickets"
+                description="Tickets resolved in period"
+                change={{
+                  value: 122,
+                  percentage: 14,
+                  timeframe: "previous period"
+                }}
+              />
+              <TicketsCountBox 
+                count={224} 
+                title="Pending Tickets"
+                description="Tickets awaiting customer"
+                change={{
+                  value: 7,
+                  percentage: 3,
+                  timeframe: "previous period"
+                }}
+              />
+            </div>
+          )}
+          
+          {/* Other Content sections - ONLY SHOW WHEN ZENDESK IS CONNECTED */}
           {hasZendeskConnection && (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               <TicketStats />
