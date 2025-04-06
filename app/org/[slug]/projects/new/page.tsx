@@ -2,24 +2,31 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/lib/auth'
-import { createProject } from '@/lib/database'
-import toast from 'react-hot-toast'
+import { useAuth } from '@/lib/auth-context'
+import { createBrowserClient } from '@supabase/ssr'
+import { toast } from 'sonner'
 
 export default function NewProjectPage({ params }: { params: { slug: string } }) {
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     setLoading(true)
     try {
-      const project = await createProject(name, params.slug)
-      if (!project) {
-        throw new Error('Failed to create project')
-      }
+      const { data: project, error } = await supabase
+        .from('projects')
+        .insert([{ name, organization_slug: params.slug }])
+        .select()
+        .single()
+
+      if (error) throw error
       
       toast.success('Project created successfully!')
       router.push(`/org/${params.slug}/projects/${project.id}`)

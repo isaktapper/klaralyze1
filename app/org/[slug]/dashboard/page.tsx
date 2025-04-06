@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useAuth } from '@/lib/auth'
-import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/lib/auth-context'
+import { createBrowserClient } from '@supabase/ssr'
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow'
 
 export default function DashboardPage({ params }: { params: { slug: string } }) {
@@ -10,6 +10,10 @@ export default function DashboardPage({ params }: { params: { slug: string } }) 
   const [showZendeskPrompt, setShowZendeskPrompt] = useState(false)
   const [hasZendeskConnection, setHasZendeskConnection] = useState(false)
   const { user } = useAuth()
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
 
   useEffect(() => {
     const checkStatus = async () => {
