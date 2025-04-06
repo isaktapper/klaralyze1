@@ -50,6 +50,54 @@ export class ZendeskAPI {
     return response.tickets.map(this.transformTicket)
   }
 
+  async getClosedTickets(startTime?: Date, groupIds: number[] = []): Promise<ZendeskTicket[]> {
+    // Base query to get closed and solved tickets
+    let endpoint = 'search.json?query=status:closed status:solved'
+    
+    // Add time filter if provided
+    if (startTime) {
+      endpoint += ` created>${startTime.toISOString()}`
+    }
+    
+    // Add group filter if provided
+    if (groupIds.length > 0) {
+      const groupFilter = groupIds.map(id => `group_id:${id}`).join(' OR ')
+      endpoint += ` (${groupFilter})`
+    }
+    
+    console.log('Zendesk search query:', endpoint)
+    
+    // Include ticket metrics in response
+    endpoint += '&include=metric_sets'
+    
+    const response = await this.request(endpoint)
+    return response.results.map(this.transformTicket)
+  }
+
+  async getFilteredTickets(startTime?: Date, groupIds: number[] = []): Promise<ZendeskTicket[]> {
+    // Base query to get tickets with Open, Pending, and Solved statuses
+    let endpoint = 'search.json?query=status:open status:pending status:solved'
+    
+    // Add time filter if provided
+    if (startTime) {
+      endpoint += ` created>${startTime.toISOString()}`
+    }
+    
+    // Add group filter if provided
+    if (groupIds.length > 0) {
+      const groupFilter = groupIds.map(id => `group_id:${id}`).join(' OR ')
+      endpoint += ` (${groupFilter})`
+    }
+    
+    console.log('Zendesk search query:', endpoint)
+    
+    // Include ticket metrics in response
+    endpoint += '&include=metric_sets'
+    
+    const response = await this.request(endpoint)
+    return response.results.map(this.transformTicket)
+  }
+
   async getAgents(): Promise<ZendeskAgent[]> {
     const response = await this.request('users.json?role=agent')
     return response.users.map(this.transformAgent)

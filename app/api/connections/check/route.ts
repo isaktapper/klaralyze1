@@ -64,6 +64,11 @@ export async function POST(request: Request) {
         const connectionValid = await zendesk.verifyCredentials();
         
         if (connectionValid) {
+          // Update user metadata to mark Zendesk as connected
+          await supabase.auth.updateUser({
+            data: { zendesk_connected: true }
+          });
+          
           return NextResponse.json({
             status: 'connected',
             message: 'Zendesk connection is valid',

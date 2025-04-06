@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Plus, Settings, HelpCircle, User, LogOut, Users, LayoutDashboard, BarChart3, Lightbulb, MessageSquare, Zap, Mail, X } from "lucide-react";
+import { Plus, Settings, HelpCircle, User, LogOut, Users, LayoutDashboard, BarChart3, Lightbulb, MessageSquare, Zap, Mail, X, Ticket } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from '@/lib/auth';
 import { Logo } from "@/components/ui/Logo";
@@ -13,6 +13,7 @@ import { SignOutButton } from '@/components/dashboard/sign-out-button';
 
 const navigation = [
   { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Tickets", href: "/dashboard/tickets", icon: Ticket },
   { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
   { name: "Insights", href: "/dashboard/insights", icon: Lightbulb },
   { name: "Team", href: "/dashboard/invite", icon: Users },
