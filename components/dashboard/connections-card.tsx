@@ -1,23 +1,40 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { ArrowRight, CheckCircle, Link as LinkIcon, X } from "lucide-react";
+import { ArrowRight, CheckCircle, Link as LinkIcon, X, Loader2 } from "lucide-react";
 
 export function ConnectionsCard() {
   const { user, updateUserMetadata, refreshUser } = useAuth();
   const [isConnecting, setIsConnecting] = useState(false);
-  const [zendeskDomain, setZendeskDomain] = useState(user?.user_metadata?.zendesk_domain || "");
-  const [zendeskEmail, setZendeskEmail] = useState(user?.user_metadata?.zendesk_email || "");
-  const [zendeskApiKey, setZendeskApiKey] = useState(user?.user_metadata?.zendesk_api_key || "");
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
+  const [zendeskDomain, setZendeskDomain] = useState("");
+  const [zendeskEmail, setZendeskEmail] = useState("");
+  const [zendeskApiKey, setZendeskApiKey] = useState("");
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
   
-  const isZendeskConnected = Boolean(user?.user_metadata?.zendesk_connected);
+  // Separate state to track connection status to avoid UI flicker during updates
+  const [isZendeskConnected, setIsZendeskConnected] = useState(false);
+  
+  // Update local state when user data changes
+  useEffect(() => {
+    if (user?.user_metadata) {
+      setZendeskDomain(user.user_metadata.zendesk_domain || "");
+      setZendeskEmail(user.user_metadata.zendesk_email || "");
+      setZendeskApiKey(user.user_metadata.zendesk_api_key || "");
+      setIsZendeskConnected(Boolean(user.user_metadata.zendesk_connected));
+    } else {
+      setZendeskDomain("");
+      setZendeskEmail("");
+      setZendeskApiKey("");
+      setIsZendeskConnected(false);
+    }
+  }, [user]);
 
   const handleConnectZendesk = async () => {
     if (!zendeskDomain || !zendeskEmail || !zendeskApiKey) {
@@ -51,6 +68,10 @@ export function ConnectionsCard() {
         zendesk_connected: true,
       });
 
+      // Update local connection state immediately for better UX
+      setIsZendeskConnected(true);
+      
+      // Then refresh the user data from the server
       await refreshUser();
       toast.success("Zendesk connected successfully!");
     } catch (error) {
@@ -62,32 +83,42 @@ export function ConnectionsCard() {
   };
 
   const handleDisconnectZendesk = async () => {
+    setIsDisconnecting(true);
     try {
       console.log("Disconnecting Zendesk...");
       
-      // Clear Zendesk related metadata
-      await updateUserMetadata({
-        zendesk_domain: null,
-        zendesk_email: null,
-        zendesk_api_key: null,
+      // Update local state immediately for better UX
+      setIsZendeskConnected(false);
+      
+      // Clear Zendesk related metadata - use empty strings instead of null
+      // as some implementations have issues with null values
+      const result = await updateUserMetadata({
+        zendesk_domain: "",
+        zendesk_email: "",
+        zendesk_api_key: "",
         zendesk_connected: false,
       });
       
-      console.log("Metadata updated, refreshing user data...");
-      
-      // Ensure the user data is refreshed
-      await refreshUser();
+      console.log("Metadata update result:", result);
       
       // Clear local state
       setZendeskDomain("");
       setZendeskEmail("");
       setZendeskApiKey("");
       
+      // Force refresh user data from server
+      await refreshUser();
+      
       toast.success("Zendesk disconnected successfully");
       console.log("Zendesk disconnected successfully");
     } catch (error) {
       console.error("Error disconnecting Zendesk:", error);
       toast.error("Failed to disconnect Zendesk");
+      
+      // Restore connection state if disconnection fails
+      setIsZendeskConnected(Boolean(user?.user_metadata?.zendesk_connected));
+    } finally {
+      setIsDisconnecting(false);
     }
   };
 
@@ -128,7 +159,7 @@ export function ConnectionsCard() {
               <h3 className="text-lg font-medium">Zendesk</h3>
               <p className="text-sm text-muted-foreground">
                 {isZendeskConnected 
-                  ? `Connected to ${user?.user_metadata?.zendesk_domain}.zendesk.com` 
+                  ? `Connected to ${user?.user_metadata?.zendesk_domain || zendeskDomain}.zendesk.com` 
                   : "Zendesk integration is not configured"}
               </p>
             </div>
@@ -143,7 +174,14 @@ export function ConnectionsCard() {
                     onClick={handleCheckStatus}
                     disabled={isCheckingStatus}
                   >
-                    Check Status
+                    {isCheckingStatus ? (
+                      <>
+                        <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                        Checking...
+                      </>
+                    ) : (
+                      "Check Status"
+                    )}
                   </Button>
                 </>
               ) : (
@@ -201,16 +239,36 @@ export function ConnectionsCard() {
       </CardContent>
       <CardFooter className="flex justify-between">
         {isZendeskConnected ? (
-          <Button variant="destructive" onClick={handleDisconnectZendesk}>
-            Disconnect Zendesk
+          <Button 
+            variant="destructive" 
+            onClick={handleDisconnectZendesk}
+            disabled={isDisconnecting}
+          >
+            {isDisconnecting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Disconnecting...
+              </>
+            ) : (
+              "Disconnect Zendesk"
+            )}
           </Button>
         ) : (
           <Button
             onClick={handleConnectZendesk}
             disabled={isConnecting || !zendeskDomain || !zendeskEmail || !zendeskApiKey}
           >
-            {isConnecting ? "Connecting..." : "Connect Zendesk"}
-            <ArrowRight className="ml-2 h-4 w-4" />
+            {isConnecting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Connecting...
+              </>
+            ) : (
+              <>
+                Connect Zendesk
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </>
+            )}
           </Button>
         )}
       </CardFooter>
