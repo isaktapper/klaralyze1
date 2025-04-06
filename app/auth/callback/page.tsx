@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
 
 export default function AuthCallbackPage() {
   const router = useRouter();
@@ -11,50 +12,44 @@ export default function AuthCallbackPage() {
 
   useEffect(() => {
     const handleCallback = async () => {
+      const code = searchParams.get('code');
+      
+      if (!code) {
+        console.error('No code provided');
+        toast.error('Verification failed. Please try again.');
+        router.push('/auth/sign-in');
+        return;
+      }
+
       try {
-        const code = searchParams.get('code');
+        const { data, error } = await supabase.auth.exchangeCodeForSession(code);
         
-        if (!code) {
-          console.error('No code provided');
-          toast.error('Invalid verification link');
-          router.push('/');
-          return;
+        if (error) {
+          throw error;
         }
 
-        // Exchange the code for a session
-        const { error } = await supabase.auth.exchangeCodeForSession(code);
-
-        if (error) {
-          console.error('Error exchanging code for session:', error);
-          toast.error('Failed to verify email. Please try again.');
-          router.push('/');
-          return;
+        if (!data.session) {
+          throw new Error('No session returned');
         }
 
         // Redirect to verification success page
         router.push('/auth/verification-success');
       } catch (error) {
-        console.error('Error in callback:', error);
-        toast.error('An error occurred during verification');
-        router.push('/');
+        console.error('Error:', error);
+        toast.error('Verification failed. Please try again.');
+        router.push('/auth/sign-in');
       }
     };
 
     handleCallback();
-  }, [router, searchParams]);
+  }, [searchParams, router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-      <div className="max-w-md w-full mx-auto p-8">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-8"></div>
-          <h2 className="text-3xl font-bold text-white mb-4">
-            Verifying your email...
-          </h2>
-          <p className="text-gray-400">
-            Please wait while we verify your email address.
-          </p>
-        </div>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="text-center space-y-4">
+        <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" />
+        <h1 className="text-2xl font-semibold text-gray-900">Verifying your email...</h1>
+        <p className="text-gray-600">Please wait while we complete the verification process.</p>
       </div>
     </div>
   );

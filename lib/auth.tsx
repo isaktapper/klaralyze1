@@ -46,11 +46,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email,
         password,
         options: {
-          emailRedirectTo: process.env.NODE_ENV === 'development' 
-            ? `${window.location.origin}/auth/callback`
-            : 'https://klaralyze1.vercel.app/auth/callback',
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
           data: {
-            skip_email_verification: process.env.NODE_ENV === 'development'
+            email_confirmed: false
           }
         }
       });
@@ -58,6 +56,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) {
         console.error('Signup error:', error);
         throw error;
+      }
+
+      if (!data.user) {
+        console.error('No user data returned');
+        throw new Error('No user data returned');
       }
 
       console.log('Signup successful:', data);
