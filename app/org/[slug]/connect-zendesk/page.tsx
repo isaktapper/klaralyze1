@@ -8,6 +8,11 @@ import { ZendeskAPI } from '@/lib/zendesk'
 import ProtectedRoute from '@/components/auth/protected-route'
 import toast from 'react-hot-toast'
 
+export async function generateStaticParams() {
+  // Return an empty array since we don't know the slugs at build time
+  return []
+}
+
 export default function ConnectZendesk({ params }: { params: { slug: string } }) {
   const [domain, setDomain] = useState('')
   const [email, setEmail] = useState('')
@@ -104,21 +109,24 @@ export default function ConnectZendesk({ params }: { params: { slug: string } })
 
   return (
     <ProtectedRoute>
-      <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 py-12 sm:px-6 lg:px-8">
-        <div className="sm:mx-auto sm:w-full sm:max-w-md">
-          <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
-            Connect your Zendesk account
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            We'll use this to analyze your support ticket data
-          </p>
-        </div>
+      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md mx-auto">
+          <div className="text-center">
+            <h2 className="text-3xl font-extrabold text-gray-900">
+              Connect Zendesk
+            </h2>
+            <p className="mt-2 text-sm text-gray-600">
+              Enter your Zendesk credentials to connect your account
+            </p>
+          </div>
 
-        <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-          <div className="bg-white px-4 py-8 shadow sm:rounded-lg sm:px-10">
+          <div className="mt-8 bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
             <form className="space-y-6" onSubmit={handleSubmit}>
               <div>
-                <label htmlFor="domain" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="domain"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Zendesk Domain
                 </label>
                 <div className="mt-1">
@@ -127,17 +135,20 @@ export default function ConnectZendesk({ params }: { params: { slug: string } })
                     name="domain"
                     type="text"
                     required
+                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    placeholder="your-domain.zendesk.com"
                     value={domain}
                     onChange={(e) => setDomain(e.target.value)}
-                    className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
-                    placeholder="your-company.zendesk.com"
                   />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                  Admin Email
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Email
                 </label>
                 <div className="mt-1">
                   <input
@@ -145,16 +156,19 @@ export default function ConnectZendesk({ params }: { params: { slug: string } })
                     name="email"
                     type="email"
                     required
+                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    placeholder="your@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
-                    placeholder="admin@your-company.com"
                   />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="apiToken" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="apiToken"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   API Token
                 </label>
                 <div className="mt-1">
@@ -163,21 +177,19 @@ export default function ConnectZendesk({ params }: { params: { slug: string } })
                     name="apiToken"
                     type="password"
                     required
+                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    placeholder="Your API token"
                     value={apiToken}
                     onChange={(e) => setApiToken(e.target.value)}
-                    className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
                   />
                 </div>
-                <p className="mt-2 text-sm text-gray-500">
-                  You can find this in Zendesk Admin → Channels → API
-                </p>
               </div>
 
               <div>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex w-full justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? 'Connecting...' : 'Connect Zendesk'}
                 </button>
