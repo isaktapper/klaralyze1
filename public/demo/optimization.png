@@ -1,1 +1,83 @@
- 
+// This is an SVG-based optimization demo
+<svg width="800" height="600" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="800" height="600" fill="#ffffff"/>
+  
+  <!-- Header -->
+  <rect x="0" y="0" width="800" height="60" fill="#f8fafc"/>
+  <text x="30" y="38" font-family="Arial" font-size="20" font-weight="bold" fill="#1e293b">Support Optimization</text>
+  
+  <!-- Main Content -->
+  <g transform="translate(30, 80)">
+    <!-- Performance Metrics -->
+    <rect x="0" y="0" width="730" height="160" rx="8" fill="#ffffff" stroke="#e2e8f0"/>
+    <text x="20" y="30" font-family="Arial" font-size="16" font-weight="bold" fill="#1e293b">Performance Improvements</text>
+    
+    <!-- Metric Bars -->
+    <g transform="translate(20, 50)">
+      <!-- Response Time -->
+      <text x="0" y="20" font-family="Arial" font-size="14" fill="#64748b">Response Time</text>
+      <rect x="150" y="5" width="400" height="20" rx="4" fill="#3b82f6" opacity="0.1"/>
+      <rect x="150" y="5" width="320" height="20" rx="4" fill="#3b82f6"/>
+      <text x="560" y="20" font-family="Arial" font-size="14" fill="#22c55e">↓ 20%</text>
+      
+      <!-- Resolution Rate -->
+      <text x="0" y="60" font-family="Arial" font-size="14" fill="#64748b">Resolution Rate</text>
+      <rect x="150" y="45" width="400" height="20" rx="4" fill="#8b5cf6" opacity="0.1"/>
+      <rect x="150" y="45" width="360" height="20" rx="4" fill="#8b5cf6"/>
+      <text x="560" y="60" font-family="Arial" font-size="14" fill="#22c55e">↑ 15%</text>
+      
+      <!-- Customer Satisfaction -->
+      <text x="0" y="100" font-family="Arial" font-size="14" fill="#64748b">CSAT Score</text>
+      <rect x="150" y="85" width="400" height="20" rx="4" fill="#6366f1" opacity="0.1"/>
+      <rect x="150" y="85" width="380" height="20" rx="4" fill="#6366f1"/>
+      <text x="560" y="100" font-family="Arial" font-size="14" fill="#22c55e">↑ 12%</text>
+    </g>
+    
+    <!-- Resource Allocation -->
+    <rect x="0" y="180" width="350" height="300" rx="8" fill="#ffffff" stroke="#e2e8f0"/>
+    <text x="20" y="210" font-family="Arial" font-size="16" font-weight="bold" fill="#1e293b">Resource Allocation</text>
+    
+    <!-- Pie Chart -->
+    <circle cx="175" cy="330" r="100" fill="#3b82f6" opacity="0.8"/>
+    <path d="M175,330 L175,230 A100,100 0 0,1 258,290 Z" fill="#6366f1"/>
+    <path d="M175,330 L258,290 A100,100 0 0,1 175,430 Z" fill="#8b5cf6"/>
+    <path d="M175,330 L175,430 A100,100 0 0,1 92,290 Z" fill="#22c55e"/>
+    
+    <!-- Legend -->
+    <g transform="translate(20, 450)">
+      <circle cx="10" cy="0" r="6" fill="#3b82f6"/>
+      <text x="25" y="5" font-family="Arial" font-size="14" fill="#64748b">Tier 1 Support (40%)</text>
+      
+      <circle cx="10" cy="25" r="6" fill="#6366f1"/>
+      <text x="25" y="30" font-family="Arial" font-size="14" fill="#64748b">Tier 2 Support (25%)</text>
+      
+      <circle cx="10" cy="50" r="6" fill="#8b5cf6"/>
+      <text x="25" y="55" font-family="Arial" font-size="14" fill="#64748b">Specialists (20%)</text>
+      
+      <circle cx="10" cy="75" r="6" fill="#22c55e"/>
+      <text x="25" y="80" font-family="Arial" font-size="14" fill="#64748b">AI Resolution (15%)</text>
+    </g>
+    
+    <!-- Recommendations -->
+    <rect x="370" y="180" width="360" height="300" rx="8" fill="#ffffff" stroke="#e2e8f0"/>
+    <text x="390" y="210" font-family="Arial" font-size="16" font-weight="bold" fill="#1e293b">Optimization Suggestions</text>
+    
+    <g transform="translate(390, 230)">
+      <!-- Suggestion 1 -->
+      <rect x="0" y="0" width="320" height="70" rx="6" fill="#f8fafc"/>
+      <text x="15" y="25" font-family="Arial" font-size="14" font-weight="bold" fill="#1e293b">Increase AI Resolution</text>
+      <text x="15" y="45" font-family="Arial" font-size="12" fill="#64748b">Potential 25% workload reduction</text>
+      
+      <!-- Suggestion 2 -->
+      <rect x="0" y="80" width="320" height="70" rx="6" fill="#f8fafc"/>
+      <text x="15" y="105" font-family="Arial" font-size="14" font-weight="bold" fill="#1e293b">Optimize Peak Hours</text>
+      <text x="15" y="125" font-family="Arial" font-size="12" fill="#64748b">Better staff distribution needed</text>
+      
+      <!-- Suggestion 3 -->
+      <rect x="0" y="160" width="320" height="70" rx="6" fill="#f8fafc"/>
+      <text x="15" y="185" font-family="Arial" font-size="14" font-weight="bold" fill="#1e293b">Enhanced Training</text>
+      <text x="15" y="205" font-family="Arial" font-size="12" fill="#64748b">Focus on common escalations</text>
+    </g>
+  </g>
+</svg> 

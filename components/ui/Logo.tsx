@@ -1,26 +1,28 @@
 import Image from 'next/image';
-import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
-export function Logo({ className = "", size = "default" }: { className?: string; size?: "small" | "default" | "large" }) {
-  const sizes = {
-    small: { width: 140, height: 35 },
-    default: { width: 180, height: 45 },
-    large: { width: 240, height: 60 }
+interface LogoProps {
+  size?: 'small' | 'medium' | 'large';
+  className?: string;
+}
+
+export function Logo({ size = 'medium', className }: LogoProps) {
+  const dimensions = {
+    small: { width: 32, height: 32 },
+    medium: { width: 48, height: 48 },
+    large: { width: 64, height: 64 }
   };
 
   return (
-    <Link href="/" className={`inline-block ${className}`}>
+    <div className={cn('relative flex items-center justify-center', className)}>
       <Image
-        src="/klaralyze_logo.svg"
+        src="/klaralyze_icon.svg"
         alt="Klaralyze"
-        width={sizes[size].width}
-        height={sizes[size].height}
+        width={dimensions[size].width}
+        height={dimensions[size].height}
+        className="object-contain brightness-0 invert"
         priority
-        className="object-contain transition-all duration-300"
-        style={{
-          filter: className.includes("white") ? "brightness(0) saturate(100%) invert(100%)" : "none"
-        }}
       />
-    </Link>
+    </div>
   );
 } 

@@ -288,7 +288,7 @@ export function SignUpSteps() {
         throw authError;
       }
       
-      if (!authData.user) {
+      if (!authData?.user?.id) {
         console.error('No user data returned');
         throw new Error('No user data returned');
       }
@@ -340,14 +340,14 @@ export function SignUpSteps() {
       console.log('Organization created successfully');
       setIsLoading(false);
 
-      // Show success message and redirect
-      toast.success('Account created! Please check your email to verify your account.');
+      // Show success message and redirect to verify email page
+      toast.success('Account created successfully! Please check your email to verify your account.');
       router.push('/auth/verify-email?email=' + encodeURIComponent(formData.email));
       
-    } catch (error) {
+    } catch (error: any) {
       setIsLoading(false);
       console.error('Error in signup process:', error);
-      toast.error('Failed to create account. Please try again.');
+      toast.error(error.message || 'Failed to create account. Please try again.');
     }
   };
 

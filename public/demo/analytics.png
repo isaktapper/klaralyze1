@@ -1,1 +1,64 @@
- 
+// This is an SVG-based dashboard demo
+<svg width="800" height="600" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="800" height="600" fill="#ffffff"/>
+  
+  <!-- Header -->
+  <rect x="0" y="0" width="800" height="60" fill="#f8fafc"/>
+  <text x="30" y="38" font-family="Arial" font-size="20" font-weight="bold" fill="#1e293b">Analytics Overview</text>
+  
+  <!-- Main Grid -->
+  <g transform="translate(30, 80)">
+    <!-- Metrics Cards -->
+    <g>
+      <!-- First Response Time -->
+      <rect x="0" y="0" width="230" height="120" rx="8" fill="#ffffff" stroke="#e2e8f0"/>
+      <text x="20" y="30" font-family="Arial" font-size="14" fill="#64748b">First Response Time</text>
+      <text x="20" y="70" font-family="Arial" font-size="24" font-weight="bold" fill="#1e293b">1.2h</text>
+      <path d="M20,90 L60,90" stroke="#22c55e" stroke-width="2"/>
+      <text x="70" y="95" font-family="Arial" font-size="14" fill="#22c55e">↑ 15%</text>
+      
+      <!-- Resolution Rate -->
+      <rect x="250" y="0" width="230" height="120" rx="8" fill="#ffffff" stroke="#e2e8f0"/>
+      <text x="270" y="30" font-family="Arial" font-size="14" fill="#64748b">Resolution Rate</text>
+      <text x="270" y="70" font-family="Arial" font-size="24" font-weight="bold" fill="#1e293b">94.2%</text>
+      <path d="M270,90 L310,90" stroke="#22c55e" stroke-width="2"/>
+      <text x="320" y="95" font-family="Arial" font-size="14" fill="#22c55e">↑ 5%</text>
+      
+      <!-- Customer Satisfaction -->
+      <rect x="500" y="0" width="230" height="120" rx="8" fill="#ffffff" stroke="#e2e8f0"/>
+      <text x="520" y="30" font-family="Arial" font-size="14" fill="#64748b">CSAT Score</text>
+      <text x="520" y="70" font-family="Arial" font-size="24" font-weight="bold" fill="#1e293b">4.8/5</text>
+      <path d="M520,90 L560,90" stroke="#22c55e" stroke-width="2"/>
+      <text x="570" y="95" font-family="Arial" font-size="14" fill="#22c55e">↑ 8%</text>
+    </g>
+    
+    <!-- Charts -->
+    <g transform="translate(0, 140)">
+      <!-- Ticket Volume Chart -->
+      <rect x="0" y="0" width="480" height="300" rx="8" fill="#ffffff" stroke="#e2e8f0"/>
+      <text x="20" y="30" font-family="Arial" font-size="16" font-weight="bold" fill="#1e293b">Ticket Volume</text>
+      <!-- Chart Lines -->
+      <path d="M40,100 C100,150 160,80 220,120 C280,160 340,90 400,130" 
+            fill="none" stroke="#3b82f6" stroke-width="2"/>
+      <path d="M40,100 C100,150 160,80 220,120 C280,160 340,90 400,130" 
+            fill="url(#blueGradient)" fill-opacity="0.1" stroke="none"/>
+      
+      <!-- Distribution Chart -->
+      <rect x="500" y="0" width="230" height="300" rx="8" fill="#ffffff" stroke="#e2e8f0"/>
+      <text x="520" y="30" font-family="Arial" font-size="16" font-weight="bold" fill="#1e293b">Category Distribution</text>
+      <!-- Pie Chart -->
+      <circle cx="615" cy="150" r="80" fill="#3b82f6" opacity="0.8"/>
+      <path d="M615,150 L615,70 A80,80 0 0,1 684,150 Z" fill="#6366f1"/>
+      <path d="M615,150 L684,150 A80,80 0 0,1 615,230 Z" fill="#8b5cf6"/>
+    </g>
+  </g>
+  
+  <!-- Gradients -->
+  <defs>
+    <linearGradient id="blueGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+</svg> 

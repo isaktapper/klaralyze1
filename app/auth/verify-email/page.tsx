@@ -1,37 +1,42 @@
 "use client";
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth';
+import { useSearchParams } from 'next/navigation';
+import { Mail } from 'lucide-react';
 
 export default function VerifyEmailPage() {
-  const router = useRouter();
-  const { user } = useAuth();
-
-  useEffect(() => {
-    // If user is already verified, redirect to dashboard
-    if (user?.email_confirmed_at) {
-      router.push('/dashboard');
-    }
-  }, [user, router]);
+  const searchParams = useSearchParams();
+  const email = searchParams.get('email');
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+      <div className="max-w-md w-full mx-auto p-8">
         <div className="text-center">
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
-            Verify your email
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            We've sent a verification link to your email address. Please check your inbox and click the link to verify your account.
+          <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-8">
+            <Mail className="w-8 h-8 text-blue-600" />
+          </div>
+          
+          <h1 className="text-3xl font-bold text-white mb-4">
+            Check your email
+          </h1>
+          
+          <p className="text-lg text-gray-400 mb-6">
+            We sent a verification link to:
           </p>
-          <div className="mt-4">
-            <button
-              onClick={() => router.push('/')}
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              Return to Home
-            </button>
+          
+          <div className="bg-white/5 rounded-lg p-4 mb-8">
+            <p className="text-lg font-medium text-white">
+              {email}
+            </p>
+          </div>
+
+          <div className="space-y-4 text-gray-400">
+            <p>
+              Click the link in the email to verify your account and complete the signup process.
+            </p>
+            <p>
+              If you don't see the email, check your spam folder.
+            </p>
           </div>
         </div>
       </div>

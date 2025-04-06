@@ -13,14 +13,15 @@ export default function AuthCallbackPage() {
     const handleCallback = async () => {
       try {
         const code = searchParams.get('code');
-        const next = searchParams.get('next') || '/dashboard';
-
+        
         if (!code) {
           console.error('No code provided');
+          toast.error('Invalid verification link');
           router.push('/');
           return;
         }
 
+        // Exchange the code for a session
         const { error } = await supabase.auth.exchangeCodeForSession(code);
 
         if (error) {
@@ -30,8 +31,8 @@ export default function AuthCallbackPage() {
           return;
         }
 
-        toast.success('Email verified successfully!');
-        router.push(next);
+        // Redirect to verification success page
+        router.push('/auth/verification-success');
       } catch (error) {
         console.error('Error in callback:', error);
         toast.error('An error occurred during verification');
@@ -43,13 +44,14 @@ export default function AuthCallbackPage() {
   }, [router, searchParams]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+      <div className="max-w-md w-full mx-auto p-8">
         <div className="text-center">
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-8"></div>
+          <h2 className="text-3xl font-bold text-white mb-4">
             Verifying your email...
           </h2>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="text-gray-400">
             Please wait while we verify your email address.
           </p>
         </div>

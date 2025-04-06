@@ -20,7 +20,7 @@ import {
 export default function InsightsPage() {
   return (
     <DashboardLayout>
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6 px-6 py-6">
         <div className="flex flex-col space-y-1.5">
           <h2 className="text-3xl font-bold tracking-tight">Insights Dashboard</h2>
           <p className="text-muted-foreground">
