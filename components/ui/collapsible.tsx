@@ -5,10 +5,16 @@ import * as React from "react";
 interface CollapsibleProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  className?: string;
   children: React.ReactNode;
 }
 
-const Collapsible = ({ open, onOpenChange, children }: CollapsibleProps) => {
+const Collapsible = ({ 
+  open, 
+  onOpenChange, 
+  className = "", 
+  children 
+}: CollapsibleProps) => {
   const [isOpen, setIsOpen] = React.useState(open || false);
   
   React.useEffect(() => {
@@ -33,7 +39,7 @@ const Collapsible = ({ open, onOpenChange, children }: CollapsibleProps) => {
   );
 
   return (
-    <div>
+    <div className={className}>
       {trigger && 
         React.cloneElement(trigger as React.ReactElement, {
           onClick: handleToggle,

@@ -14,7 +14,7 @@ const Progress = React.forwardRef<HTMLDivElement, ProgressProps>(
 
     return (
       <div
-        className={`h-2 w-full overflow-hidden rounded-full bg-gray-200 ${className}`}
+        className={`relative h-2 w-full overflow-hidden rounded-full bg-gray-100 ${className}`}
         ref={ref}
         role="progressbar"
         aria-valuemin={0}
@@ -23,8 +23,8 @@ const Progress = React.forwardRef<HTMLDivElement, ProgressProps>(
         {...props}
       >
         <div
-          className="h-full bg-blue-600 transition-all"
-          style={{ width: `${percentage}%` }}
+          className="h-full w-full flex-1 bg-blue-600 transition-all"
+          style={{ transform: `translateX(-${100 - percentage}%)` }}
         />
       </div>
     );
