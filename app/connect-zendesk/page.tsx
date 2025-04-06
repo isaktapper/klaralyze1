@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { ArrowRight, ChevronDown, ChevronUp, HelpCircle } from 'lucide-react';
+import { ArrowRight, ChevronDown, ChevronUp } from 'lucide-react';
+import { HelpCircle } from "@/components/ui/icons";
 import Image from 'next/image';
 import {
   Collapsible,
