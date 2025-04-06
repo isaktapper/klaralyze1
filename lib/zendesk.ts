@@ -33,10 +33,11 @@ export class ZendeskAPI {
 
   async verifyCredentials(): Promise<boolean> {
     try {
-      await this.request('users/me.json')
-      return true
+      await this.request('users/me.json');
+      return true;
     } catch (error) {
-      return false
+      console.error('Error verifying Zendesk credentials:', error);
+      return false;
     }
   }
 
