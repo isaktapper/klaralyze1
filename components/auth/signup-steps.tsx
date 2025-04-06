@@ -267,58 +267,91 @@ export function SignUpSteps() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validateStep()) {
-      try {
-        // Create user account
-        const { data: authData, error: authError } = await signUp(formData.email, formData.password);
-        
-        if (authError) throw authError;
+    console.log('Form submitted');
+    
+    if (!validateStep()) {
+      console.log('Validation failed');
+      return;
+    }
 
-        // Create user profile
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: authData.user?.id,
-            full_name: formData.name,
-            email: formData.email,
-            job_title: formData.jobTitle === 'Other' ? formData.otherJobTitle : formData.jobTitle,
-            company: formData.company,
-            company_size: formData.employees,
-            monthly_tickets: formData.tickets,
-            primary_goal: formData.goal === 'Other' ? formData.otherGoal : formData.goal,
-            source: formData.source === 'Other' ? formData.otherSource : formData.source
-          });
-
-        if (profileError) throw profileError;
-
-        // Create organization
-        const { error: orgError } = await supabase
-          .from('organizations')
-          .insert({
-            name: formData.company,
-            slug: formData.company.toLowerCase().replace(/\s+/g, '-'),
-            settings: {
-              company_size: formData.employees,
-              monthly_tickets: formData.tickets
-            }
-          });
-
-        if (orgError) throw orgError;
-
-        // Show success message
-        toast.success('Account created successfully!');
-        setShowSuccess(true);
-        
-        // Redirect to dashboard
-        router.push('/dashboard');
-      } catch (error) {
-        console.error('Error creating account:', error);
-        toast.error('Failed to create account. Please try again.');
+    try {
+      console.log('Starting signup process...');
+      
+      // Create user account
+      console.log('Creating user account...', formData.email);
+      const { data: authData, error: authError } = await signUp(formData.email, formData.password);
+      
+      if (authError) {
+        console.error('Auth error:', authError);
+        throw authError;
       }
+      
+      if (!authData.user) {
+        console.error('No user data returned');
+        throw new Error('No user data returned');
+      }
+
+      console.log('User created:', authData.user.id);
+
+      // Create user profile
+      console.log('Creating user profile...');
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: authData.user.id,
+          full_name: formData.name,
+          email: formData.email,
+          job_title: formData.jobTitle === 'Other' ? formData.otherJobTitle : formData.jobTitle,
+          company: formData.company,
+          company_size: formData.employees,
+          monthly_tickets: formData.tickets,
+          primary_goal: formData.goal === 'Other' ? formData.otherGoal : formData.goal,
+          source: formData.source === 'Other' ? formData.otherSource : formData.source
+        });
+
+      if (profileError) {
+        console.error('Profile error:', profileError);
+        throw profileError;
+      }
+
+      console.log('Profile created successfully');
+
+      // Create organization
+      console.log('Creating organization...');
+      const { error: orgError } = await supabase
+        .from('organizations')
+        .insert({
+          name: formData.company,
+          slug: formData.company.toLowerCase().replace(/\s+/g, '-'),
+          owner_id: authData.user.id,
+          settings: {
+            company_size: formData.employees,
+            monthly_tickets: formData.tickets
+          }
+        });
+
+      if (orgError) {
+        console.error('Organization error:', orgError);
+        throw orgError;
+      }
+
+      console.log('Organization created successfully');
+
+      // Show success message
+      toast.success('Account created successfully!');
+      setShowSuccess(true);
+      
+      // Redirect to dashboard
+      console.log('Redirecting to dashboard...');
+      router.push('/dashboard');
+    } catch (error) {
+      console.error('Error in signup process:', error);
+      toast.error('Failed to create account. Please try again.');
     }
   };
 
   const validateStep = () => {
+    console.log('Validating step:', step);
     const newErrors: Record<string, string> = {};
 
     switch (step) {
@@ -347,6 +380,7 @@ export function SignUpSteps() {
         break;
     }
 
+    console.log('Validation errors:', newErrors);
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
