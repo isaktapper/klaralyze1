@@ -76,72 +76,99 @@ export class ZendeskAPI {
     return response.results.map(this.transformTicket)
   }
 
-  async getFilteredTickets(startTime?: Date, groupIds: number[] = []): Promise<ZendeskTicket[]> {
+  async getFilteredTickets(
+    startTime?: Date, 
+    groupIds: number[] = [], 
+    statusFilter: string = ''
+  ): Promise<ZendeskTicket[]> {
     try {
-      // Base query to get tickets with Open, Pending, and Solved statuses
-      let endpoint = 'search.json?query=status:open status:pending status:solved';
+      console.log('getFilteredTickets called with params:', { 
+        startTime: startTime?.toISOString(),
+        groupIds,
+        statusFilter,
+        domain: this.domain
+      });
+      
+      // Base query for tickets - adjust based on statusFilter
+      let endpoint = '';
+      
+      if (statusFilter && statusFilter !== 'all') {
+        // Filter by specific status
+        console.log(`Using specific status filter: ${statusFilter}`);
+        endpoint = `search.json?query=status:${statusFilter}`;
+      } else {
+        // Default query to get tickets with Open, Pending, and Solved statuses
+        console.log('Using default status filters (open, pending, solved)');
+        endpoint = 'search.json?query=status:open status:pending status:solved';
+      }
       
       // Add time filter if provided
       if (startTime) {
         endpoint += ` created>${startTime.toISOString()}`;
       }
       
-      // Store original groups for logging
-      const originalGroupIds = [...groupIds];
+      // Clean and validate group IDs
+      const cleanedGroupIds = (groupIds || [])
+        .filter(id => id !== undefined && id !== null)
+        .map(id => Number(id))
+        .filter(id => !isNaN(id) && id > 0);
       
-      // Log initial request info
-      console.log('Zendesk filter request:', {
-        startTime: startTime?.toISOString(),
-        groupIds: originalGroupIds
-      });
-      
-      // Filter out any invalid group IDs (0, NaN, undefined, etc.)
-      const validGroupIds = groupIds.filter(id => id && !isNaN(id) && id > 0);
-      if (validGroupIds.length !== originalGroupIds.length) {
-        console.warn(`Filtered out ${originalGroupIds.length - validGroupIds.length} invalid group IDs`);
-        console.log('Original group IDs:', originalGroupIds);
-        console.log('Valid group IDs:', validGroupIds);
-      }
+      console.log('Original group IDs:', groupIds);
+      console.log('Cleaned group IDs:', cleanedGroupIds);
       
       // Add group filter if provided
-      if (validGroupIds.length > 0) {
+      if (cleanedGroupIds.length > 0) {
         // Create proper filter format for multiple groups
         // The API requires syntax like: (group_id:123 OR group_id:456)
-        const groupFilter = validGroupIds.map(id => `group_id:${id}`).join(' OR ');
+        const groupFilter = cleanedGroupIds.map(id => `group_id:${id}`).join(' OR ');
         endpoint += ` (${groupFilter})`;
+        console.log('Added group filter to query:', `(${groupFilter})`);
+      } else if (groupIds.length > 0) {
+        console.warn('Group IDs were provided but none were valid after cleaning');
       }
       
-      console.log('Zendesk search endpoint:', endpoint);
-      console.log('Using domain:', this.domain);
-      console.log('Filtering by groups:', validGroupIds);
+      console.log('Full Zendesk search endpoint:', endpoint);
       
       // Include ticket metrics in response
       endpoint += '&include=metric_sets';
       
+      // Make the API request
+      console.time('Zendesk API request');
       const response = await this.request(endpoint);
+      console.timeEnd('Zendesk API request');
+      
       console.log(`Retrieved ${response.results?.length || 0} tickets from Zendesk search`);
       
       if (!response.results) {
-        console.error('Unexpected response format:', response);
+        console.error('Unexpected response format, missing results array:', response);
         return [];
       }
       
-      // Apply secondary filtering if needed - sometimes Zendesk search doesn't properly filter by group
-      let tickets = response.results;
-      if (validGroupIds.length > 0) {
-        // Log each ticket's group ID for debugging
-        tickets.forEach((ticket: any) => {
-          console.log(`Ticket #${ticket.id} - Group ID: ${ticket.group_id}`);
-        });
+      // Convert response to tickets
+      const tickets = response.results;
+      
+      // Debug group information
+      const groupsInResults = new Set();
+      tickets.forEach((ticket: any) => {
+        if (ticket.group_id) {
+          groupsInResults.add(Number(ticket.group_id));
+        }
+      });
+      
+      console.log('Groups found in results:', Array.from(groupsInResults));
+      
+      // Apply secondary explicit filtering to ensure group filter works
+      let filteredTickets = tickets;
+      if (cleanedGroupIds.length > 0) {
+        console.log('Applying secondary explicit group filtering');
         
-        // Apply explicit filtering by group ID
-        const filteredTickets = tickets.filter((ticket: any) => {
-          // Convert group IDs to numbers for comparison
+        // Log each ticket's group ID for debugging
+        filteredTickets = tickets.filter((ticket: any) => {
           const ticketGroupId = ticket.group_id ? Number(ticket.group_id) : null;
-          const included = ticketGroupId && validGroupIds.includes(ticketGroupId);
+          const included = ticketGroupId && cleanedGroupIds.includes(ticketGroupId);
           
-          if (!included && ticketGroupId) {
-            console.log(`Ticket #${ticket.id} excluded - group ${ticketGroupId} not in filter list`);
+          if (ticketGroupId) {
+            console.log(`Ticket #${ticket.id} - Group: ${ticketGroupId}, Included: ${included}`);
           }
           
           return included;
@@ -149,20 +176,29 @@ export class ZendeskAPI {
         
         console.log(`After explicit group filtering: ${filteredTickets.length} tickets remain (from ${tickets.length})`);
         
-        // If we end up with zero tickets after filtering, we might have an issue with how group IDs are stored
-        // Fallback to returning all tickets if the filtered result is empty
+        // If we get zero tickets after filtering, this is unusual - log and return unfiltered
         if (filteredTickets.length === 0 && tickets.length > 0) {
-          console.warn('No tickets matched the group filter. Returning all tickets to diagnose the issue.');
+          console.warn('No tickets matched after explicit group filtering. Possible group_id mismatch.');
+          console.log('Requested group IDs:', cleanedGroupIds);
+          console.log('Available group IDs in response:', Array.from(groupsInResults));
+          
+          // Try to diagnose the issue
+          const sampleTickets = tickets.slice(0, 3);
+          console.log('Sample tickets for diagnosis:', JSON.stringify(sampleTickets, null, 2));
+          
+          // Return all tickets without filtering as a fallback
           return tickets.map(this.transformTicket);
         }
-        
-        tickets = filteredTickets;
       }
       
-      return tickets.map(this.transformTicket);
+      // Transform the filtered tickets
+      const transformedTickets = filteredTickets.map(this.transformTicket);
+      console.log(`Returning ${transformedTickets.length} transformed tickets`);
+      
+      return transformedTickets;
     } catch (error) {
       console.error('Error in getFilteredTickets:', error);
-      return [];
+      throw error; // Re-throw to allow proper error handling by caller
     }
   }
 

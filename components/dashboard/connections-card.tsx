@@ -7,7 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { ArrowRight, CheckCircle, Link as LinkIcon, X, Loader2 } from "lucide-react";
+import { ArrowRight, CheckCircle, Link as LinkIcon, X, Loader2, Info } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export function ConnectionsCard() {
   const { user, updateUserMetadata, refreshUser } = useAuth();
@@ -18,8 +22,24 @@ export function ConnectionsCard() {
   const [zendeskApiKey, setZendeskApiKey] = useState("");
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
   
+  // Zendesk connection options
+  const [fetchAllTickets, setFetchAllTickets] = useState(true);
+  const [importComments, setImportComments] = useState(true);
+  const [ticketStatus, setTicketStatus] = useState<string>("all");
+  const [syncInterval, setSyncInterval] = useState<string>("daily");
+  
   // Separate state to track connection status to avoid UI flicker during updates
   const [isZendeskConnected, setIsZendeskConnected] = useState(false);
+  
+  // Set up console messages for debugging connection issues
+  useEffect(() => {
+    console.log("User metadata in effect:", user?.user_metadata);
+    if (user?.user_metadata?.zendesk_connected) {
+      console.log("Zendesk is connected according to metadata");
+    } else {
+      console.log("Zendesk is not connected according to metadata");
+    }
+  }, [user]);
   
   // Update local state when user data changes
   useEffect(() => {
@@ -28,11 +48,23 @@ export function ConnectionsCard() {
       setZendeskEmail(user.user_metadata.zendesk_email || "");
       setZendeskApiKey(user.user_metadata.zendesk_api_key || "");
       setIsZendeskConnected(Boolean(user.user_metadata.zendesk_connected));
+      
+      // Restore preferences from user metadata if available
+      setFetchAllTickets(user.user_metadata.zendesk_fetch_all_tickets !== false);
+      setImportComments(user.user_metadata.zendesk_import_comments !== false);
+      setTicketStatus(user.user_metadata.zendesk_ticket_status || "all");
+      setSyncInterval(user.user_metadata.zendesk_sync_interval || "daily");
     } else {
       setZendeskDomain("");
       setZendeskEmail("");
       setZendeskApiKey("");
       setIsZendeskConnected(false);
+      
+      // Reset preferences to defaults
+      setFetchAllTickets(true);
+      setImportComments(true);
+      setTicketStatus("all");
+      setSyncInterval("daily");
     }
   }, [user]);
 
@@ -44,7 +76,10 @@ export function ConnectionsCard() {
 
     setIsConnecting(true);
     try {
+      console.log("Starting Zendesk connection process...");
+      
       // Test the connection first
+      console.log("Verifying Zendesk credentials...");
       const checkResponse = await fetch("/api/verify-zendesk-credentials", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -57,26 +92,42 @@ export function ConnectionsCard() {
 
       if (!checkResponse.ok) {
         const error = await checkResponse.json();
+        console.error("Zendesk verification failed:", error);
         throw new Error(error.message || "Failed to verify Zendesk credentials");
       }
 
-      // If verification successful, update user metadata
-      await updateUserMetadata({
+      console.log("Credentials verified, updating user metadata...");
+      
+      // If verification successful, update user metadata with all preferences
+      const updateResponse = await updateUserMetadata({
         zendesk_domain: zendeskDomain,
         zendesk_email: zendeskEmail,
         zendesk_api_key: zendeskApiKey,
         zendesk_connected: true,
+        zendesk_fetch_all_tickets: fetchAllTickets,
+        zendesk_import_comments: importComments,
+        zendesk_ticket_status: ticketStatus,
+        zendesk_sync_interval: syncInterval,
+        zendesk_last_connected: new Date().toISOString()
       });
+      
+      console.log("Metadata update response:", updateResponse);
 
       // Update local connection state immediately for better UX
       setIsZendeskConnected(true);
       
       // Then refresh the user data from the server
+      console.log("Refreshing user data...");
       await refreshUser();
+      
+      console.log("Connection complete, success!");
       toast.success("Zendesk connected successfully!");
     } catch (error) {
       console.error("Error connecting Zendesk:", error);
       toast.error(error instanceof Error ? error.message : "Failed to connect Zendesk");
+      
+      // Reset connection state
+      setIsZendeskConnected(false);
     } finally {
       setIsConnecting(false);
     }
@@ -90,15 +141,20 @@ export function ConnectionsCard() {
       // Update local state immediately for better UX
       setIsZendeskConnected(false);
       
-      // Clear Zendesk related metadata - use empty strings instead of null
-      // as some implementations have issues with null values
-      const result = await updateUserMetadata({
+      // Force a short delay to ensure the UI updates before server processing
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Clear Zendesk related metadata - explicitly set all fields to empty
+      console.log("Clearing Zendesk metadata...");
+      const updateData = {
         zendesk_domain: "",
         zendesk_email: "",
         zendesk_api_key: "",
         zendesk_connected: false,
-      });
+        zendesk_last_disconnected: new Date().toISOString()
+      };
       
+      const result = await updateUserMetadata(updateData);
       console.log("Metadata update result:", result);
       
       // Clear local state
@@ -107,10 +163,14 @@ export function ConnectionsCard() {
       setZendeskApiKey("");
       
       // Force refresh user data from server
+      console.log("Refreshing user data after disconnect...");
       await refreshUser();
       
-      toast.success("Zendesk disconnected successfully");
+      // Force a UI refresh
+      window.dispatchEvent(new Event('zendesk:disconnected'));
+      
       console.log("Zendesk disconnected successfully");
+      toast.success("Zendesk disconnected successfully");
     } catch (error) {
       console.error("Error disconnecting Zendesk:", error);
       toast.error("Failed to disconnect Zendesk");
@@ -142,7 +202,7 @@ export function ConnectionsCard() {
   };
 
   return (
-    <Card>
+    <Card id="connections" className="relative scroll-mt-20">
       <CardHeader>
         <CardTitle className="flex items-center">
           <LinkIcon className="mr-2 h-5 w-5" />
@@ -194,7 +254,7 @@ export function ConnectionsCard() {
           </div>
 
           {!isZendeskConnected && (
-            <div className="space-y-3">
+            <div className="space-y-5">
               <div className="grid gap-2">
                 <Label htmlFor="zendesk-domain">Zendesk Domain</Label>
                 <div className="flex">
@@ -232,6 +292,91 @@ export function ConnectionsCard() {
                 <p className="text-xs text-muted-foreground mt-1">
                   You can find your API token in the Zendesk Admin panel under Settings &gt; API
                 </p>
+              </div>
+              
+              {/* Connection options */}
+              <div className="space-y-4 pt-2 border-t">
+                <h4 className="text-sm font-medium">Connection Options</h4>
+                
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="fetch-all-tickets" 
+                    checked={fetchAllTickets}
+                    onCheckedChange={(checked) => setFetchAllTickets(checked === true)}
+                  />
+                  <div className="grid gap-1.5 leading-none">
+                    <Label
+                      htmlFor="fetch-all-tickets"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      Fetch all tickets
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      When enabled, all tickets will be fetched regardless of status
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="import-comments" 
+                    checked={importComments}
+                    onCheckedChange={(checked) => setImportComments(checked === true)}
+                  />
+                  <div className="grid gap-1.5 leading-none">
+                    <Label
+                      htmlFor="import-comments"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      Import ticket comments
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Include comments when importing tickets
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="grid gap-2">
+                  <Label htmlFor="ticket-status">Default Ticket Status</Label>
+                  <Select 
+                    value={ticketStatus} 
+                    onValueChange={setTicketStatus}
+                  >
+                    <SelectTrigger id="ticket-status">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Statuses</SelectItem>
+                      <SelectItem value="open">Open Only</SelectItem>
+                      <SelectItem value="pending">Pending Only</SelectItem>
+                      <SelectItem value="solved">Solved Only</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Default status filter for ticket imports
+                  </p>
+                </div>
+                
+                <div className="grid gap-2">
+                  <Label htmlFor="sync-interval">Sync Interval</Label>
+                  <Select 
+                    value={syncInterval} 
+                    onValueChange={setSyncInterval}
+                  >
+                    <SelectTrigger id="sync-interval">
+                      <SelectValue placeholder="Select interval" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="hourly">Hourly</SelectItem>
+                      <SelectItem value="daily">Daily</SelectItem>
+                      <SelectItem value="weekly">Weekly</SelectItem>
+                      <SelectItem value="manual">Manual Only</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    How frequently tickets should be imported
+                  </p>
+                </div>
               </div>
             </div>
           )}

@@ -4,6 +4,9 @@ import { createServerClient } from '@supabase/ssr';
 import { ZendeskAPI } from '@/lib/zendesk';
 
 export async function GET(request: Request) {
+  console.log('==== Zendesk Filtered Tickets API Call ====');
+  console.log('Request received:', new Date().toISOString());
+  
   try {
     // Parse URL and query parameters
     const url = new URL(request.url);
@@ -11,35 +14,35 @@ export async function GET(request: Request) {
     const toDate = url.searchParams.get('to');
     const groups = url.searchParams.get('groups'); // Comma-separated list of group IDs
     const includeComments = url.searchParams.get('includeComments') === 'true';
+    const ticketStatus = url.searchParams.get('status') || 'all'; // Get status filter if provided
     
     console.log('Request URL:', request.url);
-    console.log('Query parameters:', { fromDate, toDate, groups, includeComments });
+    console.log('Query parameters:', { fromDate, toDate, groups, includeComments, ticketStatus });
     
+    // Parse group IDs
     let groupIds: number[] = [];
     if (groups) {
       try {
-        // Convert group IDs from string to numbers and log for debugging
-        groupIds = groups.split(',')
-          .map(id => {
-            const trimmedId = id.trim();
-            console.log(`Processing group ID string: "${trimmedId}"`);
-            
-            const numId = parseInt(trimmedId, 10);
+        // Split by commas and process each ID
+        const groupIdStrings = groups.split(',').map(id => id.trim()).filter(id => id);
+        console.log('Group ID strings from request:', groupIdStrings);
+        
+        // Convert to numbers and filter out invalid values
+        groupIds = groupIdStrings
+          .map(idStr => {
+            const numId = parseInt(idStr, 10);
             if (isNaN(numId)) {
-              console.warn(`Invalid group ID skipped: "${trimmedId}"`);
+              console.warn(`Invalid group ID skipped: "${idStr}"`);
               return null;
             }
-            
-            console.log(`Parsed group ID: ${trimmedId} -> ${numId}`);
             return numId;
           })
-          .filter((id): id is number => id !== null); // Filter out any null values and type assertion
+          .filter((id): id is number => id !== null);
         
-        console.log('Final processed groups filter with IDs:', groupIds);
+        console.log('Parsed group IDs:', groupIds);
       } catch (error) {
         console.error('Error parsing group IDs:', error);
-        // Continue without group filtering if parsing fails
-        groupIds = [];
+        groupIds = []; // Reset on error
       }
     }
 
@@ -67,6 +70,7 @@ export async function GET(request: Request) {
     const { data: { session } } = await supabase.auth.getSession();
     
     if (!session?.user) {
+      console.error('User not authenticated');
       return NextResponse.json(
         { error: 'Not authenticated' },
         { status: 401 }
@@ -74,14 +78,26 @@ export async function GET(request: Request) {
     }
 
     // Get Zendesk credentials from user metadata
-    const { zendesk_domain, zendesk_email, zendesk_api_key } = session.user.user_metadata || {};
+    const { 
+      zendesk_domain, 
+      zendesk_email, 
+      zendesk_api_key,
+      zendesk_fetch_all_tickets,
+      zendesk_import_comments,
+      zendesk_ticket_status
+    } = session.user.user_metadata || {};
 
     if (!zendesk_domain || !zendesk_email || !zendesk_api_key) {
+      console.error('Zendesk credentials not found in user metadata');
       return NextResponse.json(
         { error: 'Zendesk not connected' },
         { status: 400 }
       );
     }
+
+    // Respect user preferences if query params don't override them
+    const shouldIncludeComments = includeComments !== undefined ? includeComments : zendesk_import_comments !== false;
+    const effectiveTicketStatus = ticketStatus || zendesk_ticket_status || 'all';
 
     // Create Zendesk API client
     const zendesk = new ZendeskAPI(zendesk_domain, zendesk_email, zendesk_api_key);
@@ -90,7 +106,7 @@ export async function GET(request: Request) {
     let startTime: Date | undefined;
     if (fromDate) {
       startTime = new Date(fromDate);
-      console.log('Using start date:', startTime);
+      console.log('Using start date:', startTime.toISOString());
     }
 
     // Fetch tickets from Zendesk
@@ -98,28 +114,43 @@ export async function GET(request: Request) {
       fromDate, 
       toDate, 
       groups: groupIds,
-      includeComments
+      includeComments: shouldIncludeComments,
+      status: effectiveTicketStatus
     });
     
     try {
-      // Ensure groupIds are properly passed to the API
+      // Log the actual call parameters
       console.log(`Calling getFilteredTickets with ${groupIds.length} group IDs:`, groupIds);
-      let tickets = await zendesk.getFilteredTickets(startTime, groupIds);
       
-      // If group filtering is applied, log the results
-      if (groupIds.length > 0) {
-        console.log(`Filtering tickets by ${groupIds.length} groups`);
-        console.log('Filtered tickets by group:', tickets.map(t => ({ 
-          id: t.ticket_id, 
-          group: t.group_id,
-          status: t.status 
-        })));
+      let tickets;
+      let statusFilter = '';
+      
+      // Apply status filter if it's not 'all'
+      if (effectiveTicketStatus !== 'all') {
+        statusFilter = effectiveTicketStatus;
+        console.log(`Applying status filter: ${statusFilter}`);
       }
       
+      // Fetch tickets with appropriate filters
+      tickets = await zendesk.getFilteredTickets(startTime, groupIds, statusFilter);
+      
+      // Log the results
       console.log(`Successfully fetched ${tickets.length} tickets from Zendesk`);
+      
+      if (groupIds.length > 0) {
+        // Log group distribution in the results
+        const groupCounts: Record<string, number> = {};
+        tickets.forEach((ticket: any) => {
+          const groupId = ticket.group_id;
+          if (groupId) {
+            groupCounts[groupId] = (groupCounts[groupId] || 0) + 1;
+          }
+        });
+        console.log('Tickets per group:', groupCounts);
+      }
 
       // Fetch comments for tickets if requested
-      if (includeComments && tickets.length > 0) {
+      if (shouldIncludeComments && tickets.length > 0) {
         console.log(`Fetching comments for ${tickets.length} tickets`);
         
         // To avoid overwhelming the API, limit to first 20 tickets if there are many
@@ -151,6 +182,8 @@ export async function GET(request: Request) {
       const resolvedTickets = tickets.filter(ticket => ticket.status === 'solved');
       const avgResolutionTime = calculateAverageResolutionTime(resolvedTickets);
       
+      // Return the full response
+      console.log('API request completed successfully');
       return NextResponse.json({
         total: tickets.length,
         ticketsByStatus,
@@ -159,7 +192,13 @@ export async function GET(request: Request) {
         solvedTickets: ticketsByStatus.solved || 0,
         avgResolutionTime,
         tickets: tickets,
-        commentsIncluded: includeComments
+        commentsIncluded: shouldIncludeComments,
+        filtered_by: {
+          groups: groupIds.length > 0 ? groupIds : null,
+          date_from: fromDate || null,
+          date_to: toDate || null,
+          status: effectiveTicketStatus
+        }
       });
     } catch (error) {
       console.error('Error fetching tickets from Zendesk API:', error);
@@ -173,7 +212,7 @@ export async function GET(request: Request) {
     }
 
   } catch (error) {
-    console.error('Error fetching Zendesk tickets:', error);
+    console.error('Unhandled error in tickets/filtered API:', error);
     return NextResponse.json(
       { 
         error: 'Failed to fetch Zendesk ticket data',
