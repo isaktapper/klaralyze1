@@ -19,6 +19,14 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const [showZendeskModal, setShowZendeskModal] = useState(false);
   const hasZendeskConnection = user?.user_metadata?.zendesk_connected || false;
+  
+  // Log user data to debug
+  useEffect(() => {
+    if (user) {
+      console.log('User metadata:', user.user_metadata);
+    }
+  }, [user]);
+  
   const [zendeskForm, setZendeskForm] = useState({
     domain: '',
     email: '',
@@ -48,6 +56,7 @@ export default function DashboardPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(zendeskForm),
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -95,6 +104,13 @@ export default function DashboardPage() {
               <p className="mt-2 text-gray-600 max-w-md">
                 Connect your Zendesk account to view your support metrics and insights
               </p>
+              <Button 
+                onClick={() => router.push('/connect-zendesk')}
+                className="mt-4"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Connect Your Zendesk Account
+              </Button>
             </div>
           )}
           
