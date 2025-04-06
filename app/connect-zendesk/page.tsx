@@ -113,44 +113,71 @@ export default function ConnectZendeskPage() {
             email: formData.email,
             apiKey: formData.apiKey,
           }),
+          credentials: 'include', // Include cookies for authentication
+        }).catch(err => {
+          console.error('Fetch error:', err);
+          throw new Error(`Network error: ${err.message}`);
         });
 
-        const data = await response.json();
-        console.log('Zendesk connection response:', data);
+        if (!response) {
+          throw new Error('No response from server');
+        }
+
+        let data;
+        try {
+          data = await response.json();
+          console.log('Zendesk connection response:', data);
+        } catch (jsonError) {
+          console.error('JSON parse error:', jsonError);
+          throw new Error('Invalid response from server');
+        }
 
         if (!response.ok) {
-          throw new Error(data.error || 'Failed to connect to Zendesk');
+          throw new Error(data.error || data.details || 'Failed to connect to Zendesk');
         }
 
-        // If successful, fetch groups and channels
+        // If successful, fetch groups and channels - use a server-side API for this to avoid CORS issues
         console.log('Fetching Zendesk groups...');
-        const groupsResponse = await fetch(`https://${formData.subdomain}.zendesk.com/api/v2/groups.json`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Basic ' + Buffer.from(`${formData.email}/token:${formData.apiKey}`).toString('base64'),
-          },
-        });
+        try {
+          const groupsResponse = await fetch('/api/zendesk-groups', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              domain: `${formData.subdomain}.zendesk.com`,
+              email: formData.email,
+              apiKey: formData.apiKey,
+            }),
+            credentials: 'include',
+          });
 
-        if (!groupsResponse.ok) {
-          throw new Error('Failed to fetch Zendesk groups');
+          if (!groupsResponse.ok) {
+            const groupError = await groupsResponse.json();
+            throw new Error(groupError.error || 'Failed to fetch Zendesk groups');
+          }
+
+          const groupsData = await groupsResponse.json();
+          console.log('Zendesk groups:', groupsData);
+
+          setSelectedData(prev => ({
+            ...prev,
+            groups: groupsData.groups.map((group: ZendeskGroup) => ({
+              id: group.id,
+              name: group.name,
+              selected: false
+            }))
+          }));
+        } catch (groupError: any) {
+          console.error('Group fetch error:', groupError);
+          // Continue to step 2 even if groups fetch fails
+          setError(`Connected to Zendesk, but failed to fetch groups: ${groupError.message}`);
         }
-
-        const groupsData = await groupsResponse.json();
-        console.log('Zendesk groups:', groupsData);
-
-        setSelectedData(prev => ({
-          ...prev,
-          groups: groupsData.groups.map((group: ZendeskGroup) => ({
-            id: group.id,
-            name: group.name,
-            selected: false
-          }))
-        }));
 
         // Move to next step
         setCurrentStep(2);
       } catch (error) {
-        console.error('Error:', error);
+        console.error('Connection error:', error);
         setError(error instanceof Error ? error.message : 'Failed to connect to Zendesk');
       } finally {
         setIsLoading(false);
