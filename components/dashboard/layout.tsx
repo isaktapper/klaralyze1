@@ -15,7 +15,7 @@ const navigation = [
   { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
   { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
   { name: "Insights", href: "/dashboard/insights", icon: Lightbulb },
-  { name: "Team", href: "/dashboard/team", icon: Users },
+  { name: "Team", href: "/dashboard/invite", icon: Users },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
@@ -77,15 +77,25 @@ export default function DashboardLayout({ children, isGuiding }: { children: Rea
           onMouseLeave={() => setIsHovered(false)}
         >
           {/* Logo */}
-          <div className="h-16 flex items-center px-4">
+          <div className="h-16 flex items-center justify-center">
             <Link href="/dashboard" className="flex items-center">
-              <Logo size="small" className="white" />
-              <span className={cn(
-                "ml-2 text-lg font-semibold text-white transition-all duration-300",
-                isGuiding || isHovered ? "opacity-100" : "opacity-0"
-              )}>
-                Klaralyze
-              </span>
+              <Image
+                src="/klaralyze_logo.svg"
+                alt="Klaralyze Logo"
+                width={isGuiding || isHovered ? 32 : 40}
+                height={isGuiding || isHovered ? 32 : 40}
+                className="transition-all duration-300"
+              />
+              <Image
+                src="/klaralyze_text.svg"
+                alt="Klaralyze"
+                width={120}
+                height={24}
+                className={cn(
+                  "ml-2 transition-all duration-300",
+                  isGuiding || isHovered ? "opacity-100" : "opacity-0"
+                )}
+              />
             </Link>
           </div>
 
