@@ -66,25 +66,6 @@ export async function middleware(request: NextRequest) {
     '/insights'
   ];
 
-  // Public routes that should not be affected by authentication middleware
-  const publicRoutes = [
-    '/',
-    '/features',
-    '/how-it-works',
-    '/pricing',
-    '/about'
-  ];
-
-  // Check if the current path is a public route
-  const isPublicRoute = publicRoutes.some(route => 
-    request.nextUrl.pathname === route || request.nextUrl.pathname === `${route}/`
-  );
-
-  // If it's a public route, just continue without any redirects
-  if (isPublicRoute) {
-    return response;
-  }
-
   const isProtectedRoute = protectedRoutes.some(route => 
     request.nextUrl.pathname.startsWith(route)
   );
@@ -99,7 +80,8 @@ export async function middleware(request: NextRequest) {
 
   // If accessing auth pages while already authenticated
   const isAuthRoute = request.nextUrl.pathname.startsWith('/login') || 
-                     request.nextUrl.pathname.startsWith('/register');
+                     request.nextUrl.pathname.startsWith('/register') ||
+                     request.nextUrl.pathname.startsWith('/signup');
   
   if (isAuthRoute && session) {
     const redirectUrl = request.nextUrl.clone();
@@ -112,18 +94,13 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/',
-    '/features',
-    '/how-it-works',
-    '/pricing',
-    '/about',
     '/dashboard/:path*',
-    '/connect-zendesk',
+    '/connect-zendesk/:path*',
     '/settings/:path*',
     '/analytics/:path*',
     '/insights/:path*',
-    '/login',
-    '/register',
-    '/signup'
+    '/login/:path*',
+    '/register/:path*',
+    '/signup/:path*'
   ],
 }; 
