@@ -1,24 +1,83 @@
 "use client";
 
-import { Logo } from '@/components/ui/Logo';
-import { SignUpSteps } from '@/components/auth/signup-steps';
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { useAuth } from '@/lib/auth'
+import { Logo } from '@/components/ui/Logo'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { toast } from 'sonner'
 
 export default function RegisterPage() {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const router = useRouter()
+  const { signUp } = useAuth()
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+
+    try {
+      const { error } = await signUp(email, password)
+      if (error) throw error
+    } catch (error) {
+      console.error('Error:', error)
+      toast.error('Failed to create account')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center mb-12">
-          <Logo size="large" className="mx-auto mb-8 white" />
-          <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl">
-            Get Started with Klaralyze
-          </h1>
-          <p className="mt-4 text-lg text-gray-400">
-            Join thousands of support teams who use Klaralyze to deliver exceptional customer service
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-100">
+      <div className="max-w-md w-full mx-auto p-8">
+        <div className="text-center mb-8">
+          <Logo className="mx-auto h-12 w-auto" />
+          <h2 className="mt-6 text-3xl font-bold tracking-tight text-gray-900">
+            Create your account
+          </h2>
+          <p className="mt-2 text-sm text-gray-600">
+            Or{' '}
+            <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500">
+              sign in to your account
+            </Link>
           </p>
         </div>
 
-        <SignUpSteps />
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <Label htmlFor="email">Email address</Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="mt-1"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="mt-1"
+            />
+          </div>
+
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? 'Creating account...' : 'Create account'}
+          </Button>
+        </form>
       </div>
     </div>
-  );
+  )
 } 
