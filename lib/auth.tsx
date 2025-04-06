@@ -9,6 +9,7 @@ import { toast } from 'sonner'
 type AuthContextType = {
   user: User | null
   loading: boolean
+  isVerified: boolean
   signUp: (email: string, password: string) => Promise<{ data: any; error: any }>
   signIn: (email: string, password: string) => Promise<{ data: any; error: any }>
   signOut: () => Promise<void>
@@ -19,6 +20,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isVerified, setIsVerified] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -26,6 +28,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       console.log('Session:', session);
       setUser(session?.user ?? null)
+      setIsVerified(session?.user?.email_confirmed_at !== null)
       setLoading(false)
     })
 
@@ -33,6 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       console.log('Auth state changed:', _event, session);
       setUser(session?.user ?? null)
+      setIsVerified(session?.user?.email_confirmed_at !== null)
       setLoading(false)
     })
 
@@ -64,6 +68,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       console.log('Signup successful:', data);
+      toast.success('Account created! Please check your email to verify your account.');
+      router.push('/dashboard');
       return { data, error: null };
     } catch (error) {
       console.error('Signup error:', error);
@@ -85,6 +91,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       console.log('Signin successful:', data);
+      setIsVerified(data.user?.email_confirmed_at !== null);
+      router.push('/dashboard');
       return { data, error: null };
     } catch (error) {
       console.error('Signin error:', error);
@@ -104,6 +112,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = {
     user,
     loading,
+    isVerified,
     signUp,
     signIn,
     signOut
