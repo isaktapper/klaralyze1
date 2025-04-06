@@ -11,11 +11,14 @@ import { Button } from "@/components/ui/button";
 import { PlayCircle, Plus } from 'lucide-react';
 import { UserStats } from '@/components/dashboard/user-stats';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth';
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [showTour, setShowTour] = useState(false);
   const [isGuiding, setIsGuiding] = useState(false);
+  const hasZendeskConnection = user?.user_metadata?.zendesk_connected || false;
 
   useEffect(() => {
     // Check if this is the first visit
@@ -38,15 +41,17 @@ export default function DashboardPage() {
               </p>
             </div>
             <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => router.push('/org/your-org/connect-zendesk')}
-                className="flex items-center gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                Connect Zendesk
-              </Button>
+              {!hasZendeskConnection && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => router.push('/org/your-org/connect-zendesk')}
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Connect Zendesk
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"
@@ -61,57 +66,82 @@ export default function DashboardPage() {
           
           {/* Key Metrics */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-lg border bg-card p-6">
-              <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium text-muted-foreground">Total Tickets</p>
-                <p className="text-2xl font-bold">1,234</p>
-                <p className="text-xs text-green-600">↑ 12% from last month</p>
+            {hasZendeskConnection ? (
+              <>
+                <div className="rounded-lg border bg-card p-6">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">Total Tickets</p>
+                    <p className="text-2xl font-bold">1,234</p>
+                    <p className="text-xs text-green-600">↑ 12% from last month</p>
+                  </div>
+                </div>
+                <div className="rounded-lg border bg-card p-6">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">Avg. Response Time</p>
+                    <p className="text-2xl font-bold">2h 15m</p>
+                    <p className="text-xs text-red-600">↑ 5% from last month</p>
+                  </div>
+                </div>
+                <div className="rounded-lg border bg-card p-6">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">Customer Satisfaction</p>
+                    <p className="text-2xl font-bold">92%</p>
+                    <p className="text-xs text-green-600">↑ 3% from last month</p>
+                  </div>
+                </div>
+                <div className="rounded-lg border bg-card p-6">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">First Contact Resolution</p>
+                    <p className="text-2xl font-bold">78%</p>
+                    <p className="text-xs text-green-600">↑ 2% from last month</p>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="col-span-4 rounded-lg border bg-card p-6">
+                <div className="flex flex-col items-center justify-center space-y-4 py-12">
+                  <p className="text-lg font-medium text-muted-foreground">No data available</p>
+                  <p className="text-sm text-muted-foreground text-center">
+                    Connect your Zendesk account to view your support metrics and insights
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={() => router.push('/org/your-org/connect-zendesk')}
+                    className="flex items-center gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Connect Zendesk
+                  </Button>
+                </div>
               </div>
-            </div>
-            <div className="rounded-lg border bg-card p-6">
-              <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium text-muted-foreground">Avg. Response Time</p>
-                <p className="text-2xl font-bold">2h 15m</p>
-                <p className="text-xs text-red-600">↑ 5% from last month</p>
-              </div>
-            </div>
-            <div className="rounded-lg border bg-card p-6">
-              <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium text-muted-foreground">Customer Satisfaction</p>
-                <p className="text-2xl font-bold">92%</p>
-                <p className="text-xs text-green-600">↑ 3% from last month</p>
-              </div>
-            </div>
-            <div className="rounded-lg border bg-card p-6">
-              <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium text-muted-foreground">First Contact Resolution</p>
-                <p className="text-2xl font-bold">78%</p>
-                <p className="text-xs text-green-600">↑ 2% from last month</p>
-              </div>
-            </div>
+            )}
           </div>
           
           {/* Main Content */}
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-            <div className="lg:col-span-4">
-              <div className="rounded-lg border bg-card p-6">
-                <h3 className="text-lg font-semibold mb-4">Performance Trends</h3>
-                <PerformanceMetrics />
+          {hasZendeskConnection ? (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
+              <div className="lg:col-span-4">
+                <div className="rounded-lg border bg-card p-6">
+                  <h3 className="text-lg font-semibold mb-4">Performance Trends</h3>
+                  <PerformanceMetrics />
+                </div>
+              </div>
+              <div className="lg:col-span-3">
+                <div className="rounded-lg border bg-card p-6">
+                  <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
+                  <RecentActivity />
+                </div>
               </div>
             </div>
-            <div className="lg:col-span-3">
-              <div className="rounded-lg border bg-card p-6">
-                <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
-                <RecentActivity />
-              </div>
-            </div>
-          </div>
+          ) : null}
           
           {/* Insights */}
-          <div className="rounded-lg border bg-card p-6">
-            <h3 className="text-lg font-semibold mb-4">AI-Powered Insights</h3>
-            <FrequentInsights />
-          </div>
+          {hasZendeskConnection && (
+            <div className="rounded-lg border bg-card p-6">
+              <h3 className="text-lg font-semibold mb-4">AI-Powered Insights</h3>
+              <FrequentInsights />
+            </div>
+          )}
         </div>
       </DashboardLayout>
 
