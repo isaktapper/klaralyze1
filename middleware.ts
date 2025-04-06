@@ -66,6 +66,25 @@ export async function middleware(request: NextRequest) {
     '/insights'
   ];
 
+  // Public routes that should not be affected by authentication middleware
+  const publicRoutes = [
+    '/',
+    '/features',
+    '/how-it-works',
+    '/pricing',
+    '/about'
+  ];
+
+  // Check if the current path is a public route
+  const isPublicRoute = publicRoutes.some(route => 
+    request.nextUrl.pathname === route || request.nextUrl.pathname === `${route}/`
+  );
+
+  // If it's a public route, just continue without any redirects
+  if (isPublicRoute) {
+    return response;
+  }
+
   const isProtectedRoute = protectedRoutes.some(route => 
     request.nextUrl.pathname.startsWith(route)
   );
@@ -93,12 +112,18 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    '/',
+    '/features',
+    '/how-it-works',
+    '/pricing',
+    '/about',
     '/dashboard/:path*',
     '/connect-zendesk',
     '/settings/:path*',
     '/analytics/:path*',
     '/insights/:path*',
     '/login',
-    '/register'
+    '/register',
+    '/signup'
   ],
 }; 
