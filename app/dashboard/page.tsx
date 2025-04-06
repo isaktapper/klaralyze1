@@ -6,32 +6,67 @@ import { TicketStats } from "@/components/dashboard/ticket-stats";
 import { RecentActivity } from "@/components/dashboard/recent-activity";
 import { PerformanceMetrics } from "@/components/dashboard/performance-metrics";
 import { FrequentInsights } from "@/components/dashboard/frequent-insights";
-import { GuidedTour } from '@/components/onboarding/GuidedTour';
 import { Button } from "@/components/ui/button";
-import { PlayCircle, Plus } from 'lucide-react';
+import { Input } from "@/components/ui/input";
+import { Plus, X } from 'lucide-react';
 import { UserStats } from '@/components/dashboard/user-stats';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 
 export default function DashboardPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
-  const [showTour, setShowTour] = useState(false);
-  const [isGuiding, setIsGuiding] = useState(false);
+  const [showZendeskModal, setShowZendeskModal] = useState(false);
   const hasZendeskConnection = user?.user_metadata?.zendesk_connected || false;
+  const [zendeskForm, setZendeskForm] = useState({
+    domain: '',
+    email: '',
+    apiKey: ''
+  });
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    // Check if this is the first visit
-    const hasSeenTour = localStorage.getItem('hasSeenTour');
-    if (!hasSeenTour) {
-      setShowTour(true);
-      localStorage.setItem('hasSeenTour', 'true');
+    // Check for Zendesk connection modal
+    if (searchParams?.get('connect') === 'zendesk') {
+      setShowZendeskModal(true);
+      router.replace('/dashboard');
     }
-  }, []);
+  }, [searchParams, router]);
+
+  const handleZendeskConnect = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setIsConnecting(true);
+
+    try {
+      // TODO: Add your API endpoint to handle Zendesk connection
+      const response = await fetch('/api/connect-zendesk', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(zendeskForm),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to connect to Zendesk');
+      }
+
+      // Close modal and refresh page to show connected state
+      setShowZendeskModal(false);
+      router.refresh();
+    } catch (err) {
+      setError('Failed to connect to Zendesk. Please check your credentials.');
+    } finally {
+      setIsConnecting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <DashboardLayout isGuiding={isGuiding}>
+      <DashboardLayout>
         <div className="flex flex-col gap-6 p-6">
           <div className="flex justify-between items-center">
             <div className="flex flex-col space-y-1.5">
@@ -40,122 +75,118 @@ export default function DashboardPage() {
                 Key metrics and insights for your support operations
               </p>
             </div>
-            <div className="flex gap-2">
-              {!hasZendeskConnection && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    if (!user) {
-                      router.push('/login');
-                    } else {
-                      router.push('/org/your-org/connect-zendesk');
-                    }
-                  }}
-                  className="flex items-center gap-2"
-                >
-                  <Plus className="h-4 w-4" />
-                  Connect Zendesk
-                </Button>
-              )}
+            {!hasZendeskConnection && (
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setShowTour(true)}
-                className="flex items-center gap-2"
+                onClick={() => router.push('/connect-zendesk')}
+                className="connect-zendesk-button"
               >
-                <PlayCircle className="h-4 w-4" />
-                Take the Tour
+                <Plus className="h-4 w-4 mr-2" />
+                Connect Zendesk
               </Button>
-            </div>
-          </div>
-          
-          {/* Key Metrics */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {hasZendeskConnection ? (
-              <>
-                <div className="rounded-lg border bg-card p-6">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium text-muted-foreground">Total Tickets</p>
-                    <p className="text-2xl font-bold">1,234</p>
-                    <p className="text-xs text-green-600">↑ 12% from last month</p>
-                  </div>
-                </div>
-                <div className="rounded-lg border bg-card p-6">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium text-muted-foreground">Avg. Response Time</p>
-                    <p className="text-2xl font-bold">2h 15m</p>
-                    <p className="text-xs text-red-600">↑ 5% from last month</p>
-                  </div>
-                </div>
-                <div className="rounded-lg border bg-card p-6">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium text-muted-foreground">Customer Satisfaction</p>
-                    <p className="text-2xl font-bold">92%</p>
-                    <p className="text-xs text-green-600">↑ 3% from last month</p>
-                  </div>
-                </div>
-                <div className="rounded-lg border bg-card p-6">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium text-muted-foreground">First Contact Resolution</p>
-                    <p className="text-2xl font-bold">78%</p>
-                    <p className="text-xs text-green-600">↑ 2% from last month</p>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className="col-span-4 rounded-lg border bg-card p-6">
-                <div className="flex flex-col items-center justify-center space-y-4 py-12">
-                  <p className="text-lg font-medium text-muted-foreground">No data available</p>
-                  <p className="text-sm text-muted-foreground text-center">
-                    Connect your Zendesk account to view your support metrics and insights
-                  </p>
-                  <Button
-                    variant="outline"
-                    onClick={() => router.push('/org/your-org/connect-zendesk')}
-                    className="flex items-center gap-2"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Connect Zendesk
-                  </Button>
-                </div>
-              </div>
             )}
           </div>
           
-          {/* Main Content */}
-          {hasZendeskConnection ? (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-              <div className="lg:col-span-4">
-                <div className="rounded-lg border bg-card p-6">
-                  <h3 className="text-lg font-semibold mb-4">Performance Trends</h3>
-                  <PerformanceMetrics />
-                </div>
-              </div>
-              <div className="lg:col-span-3">
-                <div className="rounded-lg border bg-card p-6">
-                  <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
-                  <RecentActivity />
-                </div>
-              </div>
+          {/* No data state */}
+          {!hasZendeskConnection && (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <h3 className="text-xl font-semibold text-gray-900">No data available</h3>
+              <p className="mt-2 text-gray-600 max-w-md">
+                Connect your Zendesk account to view your support metrics and insights
+              </p>
             </div>
-          ) : null}
+          )}
           
-          {/* Insights */}
+          {/* Content sections */}
           {hasZendeskConnection && (
-            <div className="rounded-lg border bg-card p-6">
-              <h3 className="text-lg font-semibold mb-4">AI-Powered Insights</h3>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              <TicketStats />
+              <RecentActivity />
+              <PerformanceMetrics />
               <FrequentInsights />
             </div>
           )}
         </div>
       </DashboardLayout>
 
-      {showTour && (
-        <GuidedTour
-          onClose={() => setShowTour(false)}
-          onGuidingChange={setIsGuiding}
-        />
+      {/* Zendesk Connection Modal */}
+      {showZendeskModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Connect Zendesk</h2>
+              <button 
+                onClick={() => setShowZendeskModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <form onSubmit={handleZendeskConnect} className="space-y-4">
+              <div>
+                <label htmlFor="domain" className="block text-sm font-medium text-gray-700 mb-1">
+                  Zendesk Domain
+                </label>
+                <Input
+                  id="domain"
+                  type="text"
+                  placeholder="your-domain.zendesk.com"
+                  value={zendeskForm.domain}
+                  onChange={(e) => setZendeskForm(prev => ({ ...prev, domain: e.target.value }))}
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                  Email
+                </label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="your@email.com"
+                  value={zendeskForm.email}
+                  onChange={(e) => setZendeskForm(prev => ({ ...prev, email: e.target.value }))}
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="apiKey" className="block text-sm font-medium text-gray-700 mb-1">
+                  API Key
+                </label>
+                <Input
+                  id="apiKey"
+                  type="password"
+                  placeholder="Enter your Zendesk API key"
+                  value={zendeskForm.apiKey}
+                  onChange={(e) => setZendeskForm(prev => ({ ...prev, apiKey: e.target.value }))}
+                  required
+                />
+              </div>
+              {error && (
+                <p className="text-sm text-red-600 mt-2">{error}</p>
+              )}
+              <div className="space-y-4 pt-4">
+                <Button 
+                  type="submit"
+                  className="w-full"
+                  disabled={isConnecting}
+                >
+                  {isConnecting ? 'Connecting...' : 'Connect with Zendesk'}
+                </Button>
+                <Button 
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setShowZendeskModal(false)}
+                  disabled={isConnecting}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
 
       <UserStats />

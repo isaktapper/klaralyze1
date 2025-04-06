@@ -78,13 +78,16 @@ export default function DashboardLayout({ children, isGuiding }: { children: Rea
           onMouseLeave={() => !isGuiding && setIsHovered(false)}
         >
           {/* Logo */}
-          <div className="h-16 flex items-center justify-center">
-            <Link href="/dashboard" className="flex items-center">
+          <div className={cn(
+            "h-16 flex items-center transition-all duration-300",
+            isGuiding || isHovered ? "px-4" : "justify-center"
+          )}>
+            <Link href="/dashboard" className="flex items-center tour-logo">
               <Image
-                src="/klaralyze_logo.svg"
+                src="/klaralyze_icon.svg"
                 alt="Klaralyze Logo"
-                width={isGuiding || isHovered ? 32 : 40}
-                height={isGuiding || isHovered ? 32 : 40}
+                width={32}
+                height={32}
                 className="transition-all duration-300"
                 style={{ filter: 'brightness(0) invert(1)' }}
               />
@@ -95,37 +98,42 @@ export default function DashboardLayout({ children, isGuiding }: { children: Rea
                 height={24}
                 className={cn(
                   "ml-2 transition-all duration-300",
-                  isGuiding || isHovered ? "opacity-100" : "opacity-0"
+                  isGuiding || isHovered ? "opacity-100" : "opacity-0 w-0"
                 )}
                 style={{ filter: 'brightness(0) invert(1)' }}
               />
             </Link>
           </div>
 
-          <nav className="mt-2">
-            {navigation.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                data-tour={item.href === "/dashboard" ? "overview" : item.href === "/dashboard/analytics" ? "analytics" : item.href === "/dashboard/team" ? "team" : item.href === "/dashboard/settings" ? "settings" : "insights"}
-                className={cn(
-                  "flex h-12 items-center pl-6 text-sm font-medium transition-colors relative",
-                  pathname === item.href
-                    ? "bg-blue-700/50 text-white"
-                    : "text-white hover:bg-blue-700/50 hover:text-white"
-                )}
-              >
-                <div className="w-8 flex items-center justify-center">
-                  <item.icon className="h-5 w-5 shrink-0" />
-                </div>
-                <span className={cn(
-                  "ml-4 transition-all duration-300",
-                  isGuiding || isHovered ? "opacity-100" : "opacity-0"
-                )}>
-                  {item.name}
-                </span>
-              </Link>
-            ))}
+          {/* Navigation */}
+          <nav className="mt-4 space-y-2">
+            {navigation.map((item) => {
+              const isActive = pathname === item.href
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  data-tour={item.name.toLowerCase()}
+                  className={cn(
+                    "flex items-center transition-colors hover:text-white hover:bg-white/10",
+                    isActive ? "text-white bg-white/10" : "text-white/70",
+                    isGuiding || isHovered ? "px-4 py-3" : "justify-center py-3",
+                    `tour-${item.name.toLowerCase()}`
+                  )}
+                >
+                  <item.icon className={cn(
+                    "h-5 w-5 transition-all duration-300",
+                    isGuiding || isHovered ? "mr-3" : ""
+                  )} />
+                  <span className={cn(
+                    "text-sm font-medium transition-all duration-300",
+                    isGuiding || isHovered ? "opacity-100" : "opacity-0 w-0"
+                  )}>
+                    {item.name}
+                  </span>
+                </Link>
+              )
+            })}
           </nav>
 
           <div className="mt-auto mb-4 px-4">
@@ -134,7 +142,10 @@ export default function DashboardLayout({ children, isGuiding }: { children: Rea
         </div>
 
         {/* Main content */}
-        <div className="flex-1 overflow-y-auto bg-background">
+        <div className={cn(
+          "flex-1 transition-all duration-300",
+          isGuiding || isHovered ? "ml-64" : "ml-16"
+        )}>
           {children}
         </div>
       </div>

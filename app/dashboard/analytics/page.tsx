@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import DashboardLayout from "@/components/dashboard/layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,11 +12,13 @@ import { useAuth } from '@/lib/auth';
 import { Button } from "@/components/ui/button";
 import { Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { ZendeskConnectModal } from '@/components/dashboard/zendesk-connect-modal';
 
 export default function AnalyticsPage() {
   const { user } = useAuth();
   const router = useRouter();
   const hasZendeskConnection = user?.user_metadata?.zendesk_connected || false;
+  const [showZendeskModal, setShowZendeskModal] = useState(false);
 
   if (!hasZendeskConnection) {
     return (
@@ -36,7 +39,7 @@ export default function AnalyticsPage() {
               </p>
               <Button
                 variant="outline"
-                onClick={() => router.push('/org/your-org/connect-zendesk')}
+                onClick={() => router.push('/connect-zendesk')}
                 className="flex items-center gap-2"
               >
                 <Plus className="h-4 w-4" />
@@ -45,6 +48,11 @@ export default function AnalyticsPage() {
             </CardContent>
           </Card>
         </div>
+
+        <ZendeskConnectModal 
+          isOpen={showZendeskModal}
+          onClose={() => setShowZendeskModal(false)}
+        />
       </DashboardLayout>
     );
   }

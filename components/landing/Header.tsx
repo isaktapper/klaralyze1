@@ -48,10 +48,10 @@ export function Header() {
               How it Works
             </Link>
             <Link href="/login">
-              <Button variant={isScrolled ? "outline" : "secondary"} className="mr-2">Log In</Button>
+              <Button variant="ghost">Sign in</Button>
             </Link>
-            <Link href="/register">
-              <Button className="bg-[#026EE6] hover:bg-[#0256B4]">Sign Up</Button>
+            <Link href="/signup">
+              <Button>Get started</Button>
             </Link>
           </nav>
 

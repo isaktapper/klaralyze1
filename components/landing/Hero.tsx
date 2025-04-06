@@ -143,23 +143,13 @@ export function Hero() {
             Unlock the power of your support data. Get instant insights, predict trends, 
             and deliver exceptional customer experiences with our advanced AI analytics platform.
           </p>
-          <div className="mt-10 flex items-center justify-center gap-x-6">
-            <form action="/register" method="get">
-              <button 
-                type="submit"
-                className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg"
-              >
-                Start Your Free Trial
-              </button>
-            </form>
-            <Button
-              variant="outline"
-              size="lg"
-              className="text-gray-300 border-gray-700 hover:bg-gray-800 group"
-            >
-              <PlayCircle className="mr-2 h-5 w-5 group-hover:text-cyan-400 transition-colors" />
-              Watch Demo
-            </Button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
+            <Link href="/signup">
+              <Button size="lg">Start for free</Button>
+            </Link>
+            <Link href="/login">
+              <Button variant="outline" size="lg">Sign in</Button>
+            </Link>
           </div>
         </motion.div>
 

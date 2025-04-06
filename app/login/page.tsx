@@ -3,93 +3,89 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useAuth } from '@/lib/auth'
+import { useAuth } from '@/lib/auth-context'
 import { Logo } from '@/components/ui/Logo'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
   const { signIn } = useAuth()
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
+    setError('')
+    setIsLoading(true)
 
     try {
-      const { error } = await signIn(email, password)
-      if (error) {
-        toast.error(error.message)
-        return
-      }
-      toast.success('Successfully signed in!')
+      await signIn(email, password)
       router.push('/dashboard')
     } catch (error) {
-      console.error('Error signing in:', error)
-      toast.error('Failed to sign in. Please try again.')
+      setError('Invalid email or password')
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
-          <Logo size="large" className="mx-auto" />
-          <h2 className="mt-6 text-3xl font-bold tracking-tight text-gray-900">
-            Sign in to your account
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Or{' '}
-            <Link href="/register" className="font-medium text-blue-600 hover:text-blue-500">
-              create a new account
-            </Link>
-          </p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-          <div className="space-y-4 rounded-md shadow-sm">
-            <div>
-              <Label htmlFor="email">Email address</Label>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <Card className="w-[400px]">
+        <CardHeader>
+          <CardTitle>Welcome back</CardTitle>
+          <CardDescription>Sign in to your account</CardDescription>
+        </CardHeader>
+        <form onSubmit={handleSubmit}>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
+                placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                placeholder="you@example.com"
               />
             </div>
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 type="password"
+                placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                placeholder="••••••••"
               />
             </div>
-          </div>
-
-          <div>
-            <Button
-              type="submit"
+            {error && (
+              <div className="text-sm text-red-500">{error}</div>
+            )}
+          </CardContent>
+          <CardFooter className="flex flex-col space-y-4">
+            <Button 
+              type="submit" 
               className="w-full"
-              disabled={loading}
+              disabled={isLoading}
             >
-              {loading ? 'Signing in...' : 'Sign in'}
+              {isLoading ? 'Signing in...' : 'Sign in'}
             </Button>
-          </div>
+            <div className="text-sm text-center">
+              Don't have an account?{' '}
+              <Link href="/signup" className="text-blue-600 hover:underline">
+                Sign up
+              </Link>
+            </div>
+          </CardFooter>
         </form>
-      </div>
+      </Card>
     </div>
   )
 } 

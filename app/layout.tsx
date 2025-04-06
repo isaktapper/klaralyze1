@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { cn } from '@/lib/utils';
 import ClientProviders from '@/components/client-providers';
+import { AuthProvider } from '@/lib/auth-context';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -19,9 +20,11 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth">
       <body className={cn(inter.className, "min-h-screen bg-white antialiased")}>
-        <ClientProviders>
-          {children}
-        </ClientProviders>
+        <AuthProvider>
+          <ClientProviders>
+            {children}
+          </ClientProviders>
+        </AuthProvider>
       </body>
     </html>
   );

@@ -205,16 +205,18 @@ export function Pricing() {
               </ul>
               {plan.freeTrial ? (
                 <Link
-                  href="/register"
-                  className={`relative z-10 mt-8 block w-full rounded-md bg-gradient-to-r ${plan.color} py-3 text-center font-semibold text-white hover:opacity-90`}
+                  href="/signup"
+                  className="block w-full"
                 >
-                  {plan.cta}
+                  <Button variant="default" className="w-full">
+                    Get started
+                  </Button>
                 </Link>
               ) : (
                 <Link
                   href="/contact"
                   className={`relative z-10 mt-8 block w-full rounded-md bg-gradient-to-r ${plan.color} py-3 text-center font-semibold text-white hover:opacity-90`}
-              >
+                >
                 {plan.cta}
                 </Link>
               )}
