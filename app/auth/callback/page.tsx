@@ -17,7 +17,7 @@ export default function AuthCallbackPage() {
       if (!code) {
         console.error('No code provided');
         toast.error('Verification failed. Please try again.');
-        router.push('/auth/sign-in');
+        router.push('/login');
         return;
       }
 
@@ -37,7 +37,7 @@ export default function AuthCallbackPage() {
       } catch (error) {
         console.error('Error:', error);
         toast.error('Verification failed. Please try again.');
-        router.push('/auth/sign-in');
+        router.push('/login');
       }
     };
 
