@@ -46,8 +46,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-          // For local development, we'll skip email verification
+          emailRedirectTo: process.env.NODE_ENV === 'development' 
+            ? `${window.location.origin}/auth/callback`
+            : 'https://klaralyze1.vercel.app/auth/callback',
           data: {
             skip_email_verification: process.env.NODE_ENV === 'development'
           }
