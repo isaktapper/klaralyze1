@@ -19,8 +19,8 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const [showZendeskModal, setShowZendeskModal] = useState(false);
   
-  // IMPORTANT: Force hasZendeskConnection to false for now to ensure button appears
-  const hasZendeskConnection = false; // Override until fixed
+  // Check if the user has Zendesk connected
+  const hasZendeskConnection = user?.user_metadata?.zendesk_connected || false;
   
   // Log user data to debug
   useEffect(() => {
@@ -103,8 +103,8 @@ export default function DashboardPage() {
             </div>
           )}
           
-          {/* Content sections - HIDDEN for now since zendesk isn't connected */}
-          {false && (
+          {/* Content sections */}
+          {hasZendeskConnection && (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               <TicketStats />
               <RecentActivity />
@@ -194,8 +194,8 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Hide user stats too until connected */}
-      {false && <UserStats />}
+      {/* Include user stats if connected */}
+      {hasZendeskConnection && <UserStats />}
     </div>
   );
 } 
