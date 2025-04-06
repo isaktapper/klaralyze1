@@ -7,23 +7,32 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/lib/auth";
 
 export function LoginForm() {
   const router = useRouter();
+  const { signIn } = useAuth();
   const [isLoading, setIsLoading] = React.useState(false);
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate login
-    setTimeout(() => {
+    try {
+      const { error } = await signIn(email, password);
+      
+      if (error) throw error;
+
       toast.success("Logged in successfully!");
       router.push("/dashboard");
+    } catch (error) {
+      console.error("Login error:", error);
+      toast.error("Invalid email or password");
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   }
 
   return (

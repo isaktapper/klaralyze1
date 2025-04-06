@@ -5,6 +5,8 @@ import { motion } from 'framer-motion';
 import { Check, AlertCircle, ChevronDown } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { useAuth } from '@/lib/auth'
+import { supabase } from '@/lib/supabase'
 
 const jobTitles = [
   "Product Manager",
@@ -147,6 +149,7 @@ const CustomSelect = ({
 
 export function SignUpSteps() {
   const router = useRouter();
+  const { signUp } = useAuth();
   const [step, setStep] = useState(1);
   const [showSuccess, setShowSuccess] = useState(false);
   const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
@@ -265,14 +268,53 @@ export function SignUpSteps() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validateStep()) {
-      // Show success toast
-      toast.success("Account created successfully!");
-      // TODO: Handle form submission
-      console.log('Form submitted:', formData);
-      setShowSuccess(true);
-      
-      // Redirect to dashboard immediately
-      router.push('/dashboard');
+      try {
+        // Create user account
+        const { data: authData, error: authError } = await signUp(formData.email, formData.password);
+        
+        if (authError) throw authError;
+
+        // Create user profile
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: authData.user?.id,
+            name: formData.name,
+            email: formData.email,
+            job_title: formData.jobTitle === 'Other' ? formData.otherJobTitle : formData.jobTitle,
+            company: formData.company,
+            company_size: formData.employees,
+            monthly_tickets: formData.tickets,
+            primary_goal: formData.goal === 'Other' ? formData.otherGoal : formData.goal,
+            source: formData.source === 'Other' ? formData.otherSource : formData.source
+          });
+
+        if (profileError) throw profileError;
+
+        // Create organization
+        const { error: orgError } = await supabase
+          .from('organizations')
+          .insert({
+            name: formData.company,
+            slug: formData.company.toLowerCase().replace(/\s+/g, '-'),
+            settings: {
+              company_size: formData.employees,
+              monthly_tickets: formData.tickets
+            }
+          });
+
+        if (orgError) throw orgError;
+
+        // Show success message
+        toast.success('Account created successfully!');
+        setShowSuccess(true);
+        
+        // Redirect to dashboard
+        router.push('/dashboard');
+      } catch (error) {
+        console.error('Error creating account:', error);
+        toast.error('Failed to create account. Please try again.');
+      }
     }
   };
 
