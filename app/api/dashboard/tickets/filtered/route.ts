@@ -17,14 +17,30 @@ export async function GET(request: Request) {
     
     let groupIds: number[] = [];
     if (groups) {
-      // Convert group IDs from string to numbers and log for debugging
-      groupIds = groups.split(',').map(id => {
-        const numId = parseInt(id.trim(), 10);
-        console.log(`Parsed group ID: ${id} -> ${numId}`);
-        return numId;
-      }).filter(id => !isNaN(id)); // Filter out any NaN values
-      
-      console.log('Processing groups filter with IDs:', groupIds);
+      try {
+        // Convert group IDs from string to numbers and log for debugging
+        groupIds = groups.split(',')
+          .map(id => {
+            const trimmedId = id.trim();
+            console.log(`Processing group ID string: "${trimmedId}"`);
+            
+            const numId = parseInt(trimmedId, 10);
+            if (isNaN(numId)) {
+              console.warn(`Invalid group ID skipped: "${trimmedId}"`);
+              return null;
+            }
+            
+            console.log(`Parsed group ID: ${trimmedId} -> ${numId}`);
+            return numId;
+          })
+          .filter((id): id is number => id !== null); // Filter out any null values and type assertion
+        
+        console.log('Final processed groups filter with IDs:', groupIds);
+      } catch (error) {
+        console.error('Error parsing group IDs:', error);
+        // Continue without group filtering if parsing fails
+        groupIds = [];
+      }
     }
 
     // Authentication check via Supabase

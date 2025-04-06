@@ -12,6 +12,12 @@ export default function TicketsPage() {
   const router = useRouter();
   const hasZendeskConnection = user?.user_metadata?.zendesk_connected || false;
 
+  // Function to handle connection navigation
+  const handleConnectZendesk = () => {
+    // Navigate specifically to the connections tab in settings
+    router.push('/dashboard/settings#connections');
+  };
+
   return (
     <DashboardLayout>
       <div className="flex flex-col gap-6 p-6">
@@ -26,7 +32,7 @@ export default function TicketsPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => router.push('/dashboard/settings')}
+              onClick={handleConnectZendesk}
             >
               <Plus className="h-4 w-4 mr-2" />
               Connect Zendesk
@@ -41,7 +47,7 @@ export default function TicketsPage() {
               To analyze your Zendesk tickets, you need to connect your Zendesk account first.
             </p>
             <Button 
-              onClick={() => router.push('/dashboard/settings')}
+              onClick={handleConnectZendesk}
               className="mt-4"
             >
               <Plus className="h-4 w-4 mr-2" />

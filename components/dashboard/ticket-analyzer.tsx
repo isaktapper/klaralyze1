@@ -274,11 +274,17 @@ export function TicketAnalyzer({ className }: TicketAnalyzerProps) {
   // Function to get group name from ID
   const getGroupName = (groupId: number | null | undefined) => {
     if (!groupId) return "-";
-    // Check if we have a groups selector with this ID
-    const group = document.getElementById(`group-${groupId}`);
-    if (group) {
+    
+    // Use the global helper if available (from ZendeskGroupsSelector)
+    if (window.getGroupName) {
+      return window.getGroupName(groupId);
+    }
+    
+    // Fallback if window helper is not available
+    const groupElement = document.getElementById(`group-${groupId}`);
+    if (groupElement) {
       // Get the closest label text
-      const label = group.nextElementSibling?.querySelector('label')?.textContent;
+      const label = groupElement.nextElementSibling?.querySelector('label')?.textContent;
       if (label) {
         // Return just the name part, not the ID
         return label.split('(')[0]?.trim() || `Group ${groupId}`;

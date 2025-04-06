@@ -4,8 +4,18 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { Loader2, RefreshCw } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Loader2, RefreshCw, Search } from "lucide-react";
 import { toast } from "sonner";
+
+// Declare global types for our window extensions
+declare global {
+  interface Window {
+    zendeskGroups?: Group[];
+    zendeskGroupMap?: Record<number, Group>;
+    getGroupName?: (groupId: number) => string;
+  }
+}
 
 interface Group {
   id: number;
@@ -25,6 +35,10 @@ export function ZendeskGroupsSelector({
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  
+  // Add a static map to make lookups easier
+  const [groupMap, setGroupMap] = useState<Record<number, Group>>({});
 
   useEffect(() => {
     fetchGroups();
@@ -52,6 +66,18 @@ export function ZendeskGroupsSelector({
       }
       
       setGroups(data.groups);
+      
+      // Build a group map for easy lookups by ID
+      const newGroupMap: Record<number, Group> = {};
+      data.groups.forEach((group: Group) => {
+        newGroupMap[group.id] = group;
+      });
+      setGroupMap(newGroupMap);
+      
+      // Make the group data available globally for reference
+      window.zendeskGroups = data.groups;
+      window.zendeskGroupMap = newGroupMap;
+      
     } catch (err) {
       console.error('Error in fetchGroups:', err);
       setError(err instanceof Error ? err.message : 'Failed to load groups');
@@ -76,6 +102,19 @@ export function ZendeskGroupsSelector({
   const clearAll = () => {
     onGroupsSelected([]);
   };
+  
+  // Filter groups based on search query
+  const filteredGroups = groups.filter(group => 
+    group.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    String(group.id).includes(searchQuery) ||
+    (group.description && group.description.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+  
+  // Helper function to get group name from id - available to external components
+  window.getGroupName = (groupId: number) => {
+    const group = groupMap[groupId];
+    return group ? group.name : `Group ${groupId}`;
+  };
 
   return (
     <Card>
@@ -83,6 +122,17 @@ export function ZendeskGroupsSelector({
         <CardTitle className="text-sm font-medium">Zendesk Groups</CardTitle>
       </CardHeader>
       <CardContent>
+        {/* Add search input */}
+        <div className="relative mb-3">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search groups..."
+            className="pl-8"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        
         <div className="flex justify-between mb-3">
           <Button variant="ghost" size="sm" onClick={selectAll} disabled={loading || groups.length === 0}>
             Select All
@@ -118,9 +168,13 @@ export function ZendeskGroupsSelector({
           <div className="text-sm text-gray-500 text-center py-4">
             {error ? 'Unable to load groups' : 'No groups available'}
           </div>
+        ) : filteredGroups.length === 0 ? (
+          <div className="text-sm text-gray-500 text-center py-4">
+            No matching groups found
+          </div>
         ) : (
           <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
-            {groups.map((group) => (
+            {filteredGroups.map((group) => (
               <div key={group.id} className="flex items-center space-x-2 border-b pb-2">
                 <Checkbox
                   id={`group-${group.id}`}
@@ -145,7 +199,7 @@ export function ZendeskGroupsSelector({
         
         {selectedGroups.length > 0 && (
           <div className="mt-3 text-xs text-gray-500">
-            Selected group IDs: {selectedGroups.join(', ')}
+            Selected: {selectedGroups.map(id => groupMap[id]?.name || `ID ${id}`).join(', ')}
           </div>
         )}
       </CardContent>
