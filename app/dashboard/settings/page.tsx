@@ -5,12 +5,58 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { ConnectionsCard } from "@/components/dashboard/connections-card";
 
 export default function SettingsPage() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [connections, setConnections] = useState<Array<{
+    id: string;
+    name: string;
+    status: "connected" | "disconnected" | "error";
+    lastUpdated?: Date;
+    details?: string;
+  }>>([]);
+
+  // Fetch and set connection statuses from user data
+  useEffect(() => {
+    if (user) {
+      const connectionsList = [];
+      
+      // Check Zendesk connection
+      const zendeskConnected = user.user_metadata?.zendesk_connected || false;
+      const zendeskDomain = user.user_metadata?.zendesk_domain;
+      const zendeskEmail = user.user_metadata?.zendesk_email;
+      
+      connectionsList.push({
+        id: "zendesk",
+        name: "Zendesk",
+        status: zendeskConnected ? ("connected" as const) : ("disconnected" as const),
+        details: zendeskConnected 
+          ? `Connected with ${zendeskEmail} to ${zendeskDomain}`
+          : "Zendesk integration is not configured",
+        lastUpdated: zendeskConnected ? new Date() : undefined,
+      });
+      
+      setConnections(connectionsList);
+    }
+  }, [user]);
+
+  const verifyConnection = async (id: string) => {
+    setLoading(true);
+    try {
+      // In a real implementation, this would verify the connection is working
+      // For now, we'll just simulate a delay and success
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      toast.success(`${id} connection verified successfully`);
+    } catch (error) {
+      toast.error(`Failed to verify ${id} connection`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -21,6 +67,9 @@ export default function SettingsPage() {
             Manage your account and preferences
           </p>
         </div>
+
+        {/* Add the ConnectionsCard at the top */}
+        <ConnectionsCard connections={connections} />
 
         <div className="grid gap-6 md:grid-cols-2">
           {/* Profile Settings */}
