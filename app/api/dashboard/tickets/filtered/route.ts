@@ -12,6 +12,9 @@ export async function GET(request: Request) {
     const groups = url.searchParams.get('groups'); // Comma-separated list of group IDs
     const includeComments = url.searchParams.get('includeComments') === 'true';
     
+    console.log('Request URL:', request.url);
+    console.log('Query parameters:', { fromDate, toDate, groups, includeComments });
+    
     let groupIds: number[] = [];
     if (groups) {
       // Convert group IDs from string to numbers and log for debugging
@@ -19,7 +22,8 @@ export async function GET(request: Request) {
         const numId = parseInt(id.trim(), 10);
         console.log(`Parsed group ID: ${id} -> ${numId}`);
         return numId;
-      });
+      }).filter(id => !isNaN(id)); // Filter out any NaN values
+      
       console.log('Processing groups filter with IDs:', groupIds);
     }
 
@@ -70,6 +74,7 @@ export async function GET(request: Request) {
     let startTime: Date | undefined;
     if (fromDate) {
       startTime = new Date(fromDate);
+      console.log('Using start date:', startTime);
     }
 
     // Fetch tickets from Zendesk
@@ -81,11 +86,18 @@ export async function GET(request: Request) {
     });
     
     try {
+      // Ensure groupIds are properly passed to the API
+      console.log(`Calling getFilteredTickets with ${groupIds.length} group IDs:`, groupIds);
       let tickets = await zendesk.getFilteredTickets(startTime, groupIds);
       
-      // If group filtering is applied
+      // If group filtering is applied, log the results
       if (groupIds.length > 0) {
         console.log(`Filtering tickets by ${groupIds.length} groups`);
+        console.log('Filtered tickets by group:', tickets.map(t => ({ 
+          id: t.ticket_id, 
+          group: t.group_id,
+          status: t.status 
+        })));
       }
       
       console.log(`Successfully fetched ${tickets.length} tickets from Zendesk`);
@@ -117,6 +129,7 @@ export async function GET(request: Request) {
 
       // Calculate ticket metrics by status
       const ticketsByStatus = countTicketsByStatus(tickets);
+      console.log('Tickets by status:', ticketsByStatus);
       
       // Calculate resolution metrics
       const resolvedTickets = tickets.filter(ticket => ticket.status === 'solved');

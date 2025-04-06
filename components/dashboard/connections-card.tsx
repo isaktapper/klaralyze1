@@ -63,18 +63,28 @@ export function ConnectionsCard() {
 
   const handleDisconnectZendesk = async () => {
     try {
+      console.log("Disconnecting Zendesk...");
+      
+      // Clear Zendesk related metadata
       await updateUserMetadata({
-        zendesk_domain: "",
-        zendesk_email: "",
-        zendesk_api_key: "",
+        zendesk_domain: null,
+        zendesk_email: null,
+        zendesk_api_key: null,
         zendesk_connected: false,
       });
       
+      console.log("Metadata updated, refreshing user data...");
+      
+      // Ensure the user data is refreshed
       await refreshUser();
+      
+      // Clear local state
       setZendeskDomain("");
       setZendeskEmail("");
       setZendeskApiKey("");
-      toast.success("Zendesk disconnected");
+      
+      toast.success("Zendesk disconnected successfully");
+      console.log("Zendesk disconnected successfully");
     } catch (error) {
       console.error("Error disconnecting Zendesk:", error);
       toast.error("Failed to disconnect Zendesk");

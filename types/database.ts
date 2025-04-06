@@ -70,6 +70,7 @@ export type ZendeskTicket = {
   tags: string[]
   custom_fields: Record<string, any>
   comments?: any[]
+  group_id?: number | null
 }
 
 export type ZendeskAgent = {

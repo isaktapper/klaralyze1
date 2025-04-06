@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { DateRangePicker } from "@/components/dashboard/date-range-picker";
 import { ZendeskGroupsSelector } from "@/components/dashboard/zendesk-groups-selector";
 import { Button } from "@/components/ui/button";
-import { Loader2, RefreshCw, Download, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, RefreshCw, Download, ChevronLeft, ChevronRight, Columns } from "lucide-react";
 import { DateRange } from "react-day-picker";
 import { subDays, format } from "date-fns";
 import { toast } from "sonner";
@@ -20,9 +20,25 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { TicketImportConfig, ImportConfig } from "@/components/dashboard/ticket-import-config";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface TicketAnalyzerProps {
   className?: string;
+}
+
+// Define column interface
+interface TableColumn {
+  id: string;
+  name: string;
+  visible: boolean;
+  render?: (ticket: any) => React.ReactNode;
 }
 
 export function TicketAnalyzer({ className }: TicketAnalyzerProps) {
@@ -56,6 +72,20 @@ export function TicketAnalyzer({ className }: TicketAnalyzerProps) {
     selectedFields: [],
     includeComments: true
   });
+
+  // Add state for visible columns
+  const [columns, setColumns] = useState<TableColumn[]>([
+    { id: 'ticket_id', name: 'ID', visible: true, render: (ticket) => <span className="font-medium">#{ticket.ticket_id}</span> },
+    { id: 'subject', name: 'Subject', visible: true, render: (ticket) => <span className="max-w-[200px] truncate">{ticket.subject}</span> },
+    { id: 'group_id', name: 'Group', visible: true, render: (ticket) => <span>{ticket.group_id ? getGroupName(ticket.group_id) : "-"}</span> },
+    { id: 'status', name: 'Status', visible: true, render: (ticket) => getStatusBadge(ticket.status) },
+    { id: 'priority', name: 'Priority', visible: true, render: (ticket) => <span>{ticket.priority || "-"}</span> },
+    { id: 'created_date', name: 'Created', visible: true, render: (ticket) => <span>{ticket.created_date ? new Date(ticket.created_date).toLocaleDateString() : '-'}</span> },
+    { id: 'updated_date', name: 'Updated', visible: true, render: (ticket) => <span>{ticket.updated_date ? new Date(ticket.updated_date).toLocaleDateString() : '-'}</span> },
+    { id: 'requester_id', name: 'Requester', visible: false, render: (ticket) => <span>#{ticket.requester_id || "-"}</span> },
+    { id: 'assignee_id', name: 'Assignee', visible: false, render: (ticket) => <span>#{ticket.assignee_id || "-"}</span> },
+    { id: 'tags', name: 'Tags', visible: false, render: (ticket) => <span>{ticket.tags?.join(', ') || "-"}</span> },
+  ]);
 
   // Fetch tickets on initial load
   useEffect(() => {
@@ -262,6 +292,16 @@ export function TicketAnalyzer({ className }: TicketAnalyzerProps) {
     setExportConfig(config);
   };
 
+  // Function to toggle column visibility
+  const toggleColumnVisibility = (columnId: string) => {
+    setColumns(columns.map(col => 
+      col.id === columnId ? { ...col, visible: !col.visible } : col
+    ));
+  };
+
+  // Get only visible columns
+  const visibleColumns = columns.filter(col => col.visible);
+
   return (
     <Card className={className}>
       <CardHeader>
@@ -287,24 +327,49 @@ export function TicketAnalyzer({ className }: TicketAnalyzerProps) {
             />
           </div>
           
-          {/* Updated action buttons with export config */}
+          {/* Updated action buttons with column selector */}
           <div className="flex justify-between">
-            <Button 
-              onClick={fetchTickets} 
-              disabled={isLoading || !dateRange?.from}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
-                  Loading...
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="mr-2 h-4 w-4" /> 
-                  Refresh Tickets
-                </>
-              )}
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                onClick={fetchTickets} 
+                disabled={isLoading || !dateRange?.from}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="mr-2 h-4 w-4" /> 
+                    Refresh Tickets
+                  </>
+                )}
+              </Button>
+              
+              {/* Add column selector dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    <Columns className="mr-2 h-4 w-4" />
+                    Select Columns
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuLabel>Table Columns</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {columns.map(column => (
+                    <DropdownMenuCheckboxItem
+                      key={column.id}
+                      checked={column.visible}
+                      onCheckedChange={() => toggleColumnVisibility(column.id)}
+                    >
+                      {column.name}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
             
             <div className="flex">
               <Button 
@@ -353,51 +418,31 @@ export function TicketAnalyzer({ className }: TicketAnalyzerProps) {
             </div>
           </div>
           
-          {/* Updated Tickets table */}
+          {/* Updated Tickets table with dynamic columns */}
           <div className="rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>ID</TableHead>
-                  <TableHead>Subject</TableHead>
-                  <TableHead>Group</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Priority</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead>Updated</TableHead>
+                  {visibleColumns.map(column => (
+                    <TableHead key={column.id}>{column.name}</TableHead>
+                  ))}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {tickets.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-4 text-muted-foreground">
+                    <TableCell colSpan={visibleColumns.length} className="text-center py-4 text-muted-foreground">
                       {isLoading ? 'Loading tickets...' : 'No tickets found'}
                     </TableCell>
                   </TableRow>
                 ) : (
                   currentTickets.map((ticket) => (
                     <TableRow key={ticket.ticket_id}>
-                      <TableCell className="font-medium">
-                        #{ticket.ticket_id}
-                      </TableCell>
-                      <TableCell className="max-w-[200px] truncate">
-                        {ticket.subject}
-                      </TableCell>
-                      <TableCell>
-                        {ticket.group_id ? getGroupName(ticket.group_id) : "-"}
-                      </TableCell>
-                      <TableCell>
-                        {getStatusBadge(ticket.status)}
-                      </TableCell>
-                      <TableCell>
-                        {ticket.priority || "-"}
-                      </TableCell>
-                      <TableCell>
-                        {ticket.created_date ? new Date(ticket.created_date).toLocaleDateString() : '-'}
-                      </TableCell>
-                      <TableCell>
-                        {ticket.updated_date ? new Date(ticket.updated_date).toLocaleDateString() : '-'}
-                      </TableCell>
+                      {visibleColumns.map(column => (
+                        <TableCell key={`${ticket.ticket_id}-${column.id}`}>
+                          {column.render ? column.render(ticket) : ticket[column.id] || "-"}
+                        </TableCell>
+                      ))}
                     </TableRow>
                   ))
                 )}
