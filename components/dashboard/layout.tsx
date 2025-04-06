@@ -94,6 +94,23 @@ export default function DashboardLayout({ children, isGuiding }: { children: Rea
                 </span>
               </Link>
             ))}
+            <button
+              onClick={handleSignOut}
+              className={cn(
+                "group/item flex h-12 items-center pl-6 text-sm font-medium transition-colors relative w-full",
+                "text-white hover:bg-blue-700/50 hover:text-white"
+              )}
+            >
+              <div className="w-8 flex items-center justify-center">
+                <LogOut className="h-5 w-5 shrink-0" />
+              </div>
+              <span className={cn(
+                "transition-opacity duration-300 absolute left-[56px]",
+                isGuiding ? "!opacity-100" : "opacity-0 group-hover:opacity-100"
+              )}>
+                Sign Out
+              </span>
+            </button>
           </div>
 
           <div className="mt-4 border-t border-white/10 pt-4">
@@ -111,14 +128,6 @@ export default function DashboardLayout({ children, isGuiding }: { children: Rea
             </div>
           </div>
         </div>
-
-        <button
-          onClick={handleSignOut}
-          className="flex items-center space-x-2 text-gray-600 hover:text-gray-900"
-        >
-          <LogOut className="h-5 w-5" />
-          <span>Sign Out</span>
-        </button>
       </div>
 
       {/* Main content */}
