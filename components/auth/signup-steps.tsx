@@ -170,6 +170,7 @@ export function SignUpSteps() {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -275,6 +276,7 @@ export function SignUpSteps() {
     }
 
     try {
+      setIsLoading(true);
       console.log('Starting signup process...');
       
       // Create user account
@@ -336,14 +338,14 @@ export function SignUpSteps() {
       }
 
       console.log('Organization created successfully');
+      setIsLoading(false);
 
-      // Show success message
-      toast.success('Account created successfully!');
+      // Show success message and redirect
+      toast.success('Account created! Please check your email to verify your account.');
+      router.push('/auth/verify-email?email=' + encodeURIComponent(formData.email));
       
-      // Redirect to verify email page
-      console.log('Redirecting to verify email page...');
-      router.push('/auth/verify-email');
     } catch (error) {
+      setIsLoading(false);
       console.error('Error in signup process:', error);
       toast.error('Failed to create account. Please try again.');
     }

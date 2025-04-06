@@ -46,6 +46,7 @@
     "@zxcvbn-ts/core": "^3.0.4",
     "autoprefixer": "10.4.15",
     "bufferutil": "^4.0.9",
+    "canvas-confetti": "^1.9.3",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
