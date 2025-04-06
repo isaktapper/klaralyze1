@@ -1,7 +1,8 @@
+"use client";
+
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Check, AlertCircle, ChevronDown } from 'lucide-react';
-import { zxcvbn } from '@zxcvbn-ts/core';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
@@ -59,70 +60,27 @@ interface StepProps {
 }
 
 const ProgressBar = ({ currentStep, totalSteps }: StepProps) => {
-  const stepMessages = [
-    "Let's get you set up!",
-    "Tell us about your role",
-    "Help us understand your needs",
-    "Just one last step!"
-  ];
+  const progress = (currentStep / totalSteps) * 100;
 
   return (
-    <div className="relative mb-8">
-      <div className="overflow-hidden h-2 text-xs flex rounded-full bg-blue-100">
-        <motion.div
-          className="bg-[#026EE6] h-full"
-          initial={{ width: "0%" }}
-          animate={{ width: `${(currentStep / totalSteps) * 100}%` }}
-          transition={{ duration: 0.5 }}
+    <div className="relative pt-1">
+      <div className="flex mb-2 items-center justify-between">
+        <div>
+          <span className="text-xs font-semibold inline-block text-blue-600">
+            Step {currentStep} of {totalSteps}
+          </span>
+        </div>
+        <div className="text-right">
+          <span className="text-xs font-semibold inline-block text-blue-600">
+            {Math.round(progress)}%
+          </span>
+        </div>
+      </div>
+      <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-blue-200">
+        <div
+          style={{ width: `${progress}%` }}
+          className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500 transition-all duration-500"
         />
-      </div>
-      <div className="mt-2 text-center">
-        <span className="text-sm font-medium text-gray-900">{stepMessages[currentStep - 1]}</span>
-      </div>
-    </div>
-  );
-};
-
-const PasswordStrengthMeter = ({ password }: { password: string }) => {
-  const result = zxcvbn(password);
-  const score = result.score; // 0-4
-
-  const getStrengthColor = () => {
-    switch (score) {
-      case 0: return 'bg-red-500';
-      case 1: return 'bg-orange-500';
-      case 2: return 'bg-yellow-500';
-      case 3: return 'bg-blue-500';
-      case 4: return 'bg-green-500';
-      default: return 'bg-gray-200';
-    }
-  };
-
-  const getStrengthText = () => {
-    switch (score) {
-      case 0: return 'Very Weak';
-      case 1: return 'Weak';
-      case 2: return 'Fair';
-      case 3: return 'Strong';
-      case 4: return 'Very Strong';
-      default: return '';
-    }
-  };
-
-  return (
-    <div className="mt-2">
-      <div className="flex h-2 overflow-hidden rounded-full bg-gray-200">
-        {[...Array(5)].map((_, i) => (
-          <div
-            key={i}
-            className={`flex-1 ${i <= score ? getStrengthColor() : ''} transition-all duration-300`}
-          />
-        ))}
-      </div>
-      <div className="mt-1 flex items-center text-sm">
-        <span className={`font-medium ${score >= 3 ? 'text-green-600' : 'text-gray-600'}`}>
-          {getStrengthText()}
-        </span>
       </div>
     </div>
   );
@@ -404,7 +362,6 @@ export function SignUpSteps() {
                     className="mt-1 block w-full rounded-lg border border-[#E5E7EB] bg-white px-4 py-3 text-[#111827] placeholder-[#6B7280] focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                     placeholder="••••••••"
                   />
-                  {formData.password && <PasswordStrengthMeter password={formData.password} />}
                   {shouldShowError('password') && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
                 </div>
 
@@ -439,14 +396,14 @@ export function SignUpSteps() {
                     value={formData.jobTitle}
                     onChange={handleInputChange}
                     options={jobTitles}
-                    placeholder="Select a job title"
+                    placeholder="Select job title"
                     error={shouldShowError('jobTitle') ? errors.jobTitle : undefined}
                   />
                 </div>
 
                 {formData.jobTitle === 'Other' && (
                   <div>
-                    <label htmlFor="otherJobTitle" className="block text-sm font-medium text-gray-700">Specify Job Title</label>
+                    <label htmlFor="otherJobTitle" className="block text-sm font-medium text-gray-700">Please specify</label>
                     <input
                       type="text"
                       id="otherJobTitle"
@@ -454,7 +411,7 @@ export function SignUpSteps() {
                       value={formData.otherJobTitle}
                       onChange={handleInputChange}
                       className="mt-1 block w-full rounded-lg border border-[#E5E7EB] bg-white px-4 py-3 text-[#111827] placeholder-[#6B7280] focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                      placeholder="Enter your job title"
+                      placeholder="Enter job title"
                     />
                     {shouldShowError('otherJobTitle') && <p className="mt-1 text-sm text-red-600">{errors.otherJobTitle}</p>}
                   </div>
@@ -524,7 +481,7 @@ export function SignUpSteps() {
 
                 {formData.goal === 'Other' && (
                   <div>
-                    <label htmlFor="otherGoal" className="block text-sm font-medium text-gray-700">Specify Your Goal</label>
+                    <label htmlFor="otherGoal" className="block text-sm font-medium text-gray-700">Please specify</label>
                     <input
                       type="text"
                       id="otherGoal"
@@ -578,66 +535,43 @@ export function SignUpSteps() {
               </motion.div>
             )}
 
-            <div className="flex justify-between pt-4">
-              {step > 1 && (
+            <div className="flex justify-between">
+              <button
+                type="button"
+                onClick={handleBack}
+                disabled={step === 1}
+                className={`px-4 py-2 text-sm font-medium rounded-md ${
+                  step === 1
+                    ? 'text-gray-400 cursor-not-allowed'
+                    : 'text-gray-700 hover:text-gray-900'
+                }`}
+              >
+                Back
+              </button>
+              {step < 4 ? (
                 <button
                   type="button"
-                  onClick={handleBack}
-                  className="flex items-center justify-center rounded-lg border border-gray-300 bg-white px-6 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  onClick={handleNext}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
-                  Back
+                  Next
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  Complete Sign Up
                 </button>
               )}
-              <button
-                type={step === 4 ? 'submit' : 'button'}
-                onClick={step === 4 ? undefined : handleNext}
-                className="ml-auto flex items-center justify-center rounded-lg bg-[#026EE6] px-6 py-3 text-sm font-medium text-white hover:bg-[#0256B4] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              >
-                {step === 4 ? 'Complete Setup' : 'Continue'}
-              </button>
             </div>
           </form>
         </>
       ) : (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="text-center space-y-6 bg-white p-8 rounded-2xl shadow-lg"
-        >
-          <div className="mx-auto w-16 h-16 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full flex items-center justify-center">
-            <Check className="w-8 h-8 text-white" />
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900">Welcome to Klaralyze!</h2>
-          <div className="space-y-4 text-gray-600">
-            <p>Your account has been successfully created.</p>
-            <p className="font-medium">Your 14-day free trial starts now!</p>
-            <ul className="text-left space-y-2 mt-4">
-              <li className="flex items-center gap-2">
-                <Check className="w-5 h-5 text-cyan-500" />
-                <span>Full access to all features</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <Check className="w-5 h-5 text-cyan-500" />
-                <span>Unlimited support ticket analysis</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <Check className="w-5 h-5 text-cyan-500" />
-                <span>AI-powered insights and recommendations</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <Check className="w-5 h-5 text-cyan-500" />
-                <span>Priority customer support</span>
-              </li>
-            </ul>
-          </div>
-          <button 
-            onClick={() => router.push('/dashboard')}
-            className="mt-4 px-6 py-3 bg-gradient-to-r from-cyan-500 to-purple-500 text-white rounded-lg font-medium hover:from-cyan-600 hover:to-purple-600 transition-all"
-          >
-            Go to Dashboard
-          </button>
-          <p className="text-gray-500 text-sm">Redirecting you to the dashboard...</p>
-        </motion.div>
+        <div className="text-center">
+          <h3 className="text-lg font-medium text-gray-900">Account created successfully!</h3>
+          <p className="mt-1 text-sm text-gray-500">Redirecting to dashboard...</p>
+        </div>
       )}
     </div>
   );

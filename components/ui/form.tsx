@@ -1,29 +1,28 @@
 'use client';
 
 import * as React from 'react';
-import * as LabelPrimitive from '@radix-ui/react-label';
+import { useForm } from 'react-hook-form';
 import { Slot } from '@radix-ui/react-slot';
-import type {
-  ControllerProps,
-  FieldPath,
-  FieldValues,
-  UseFormReturn,
-} from 'react-hook-form';
-import {
-  Controller,
-  FormProvider,
-  useFormContext,
-} from 'react-hook-form';
-
 import { cn } from '@/lib/utils';
-import { Label } from '@/components/ui/label';
 
-interface FormProps<TFieldValues extends FieldValues> extends React.PropsWithChildren {
-  form: UseFormReturn<TFieldValues>;
+interface FormProps<TFormValues> {
+  form: ReturnType<typeof useForm<TFormValues>>;
+  onSubmit: (data: TFormValues) => void;
+  children: React.ReactNode;
+  className?: string;
 }
 
-const Form = <TFieldValues extends FieldValues>({ form, children }: FormProps<TFieldValues>) => {
-  return <FormProvider {...form}>{children}</FormProvider>;
+const Form = <TFormValues extends Record<string, any>>({
+  form,
+  onSubmit,
+  children,
+  className,
+}: FormProps<TFormValues>) => {
+  return (
+    <form onSubmit={form.handleSubmit(onSubmit)} className={className}>
+      {children}
+    </form>
+  );
 };
 
 type FormFieldContextValue = {
@@ -34,15 +33,12 @@ const FormFieldContext = React.createContext<FormFieldContextValue>(
   {} as FormFieldContextValue
 );
 
-const FormField = <
-  TFieldValues extends FieldValues = FieldValues,
-  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
->({
+const FormField = <TFormValues extends Record<string, any>>({
   ...props
-}: ControllerProps<TFieldValues, TName>) => {
+}: ReturnType<typeof useForm<TFormValues>>["register"]) => {
   return (
     <FormFieldContext.Provider value={{ name: props.name }}>
-      <Controller {...props} />
+      <Slot>{props.children}</Slot>
     </FormFieldContext.Provider>
   );
 };
@@ -50,7 +46,7 @@ const FormField = <
 const useFormField = () => {
   const fieldContext = React.useContext(FormFieldContext);
   const itemContext = React.useContext(FormItemContext);
-  const { getFieldState, formState } = useFormContext();
+  const { getFieldState, formState } = useForm();
 
   const fieldState = getFieldState(fieldContext.name, formState);
 
@@ -93,15 +89,19 @@ const FormItem = React.forwardRef<
 FormItem.displayName = 'FormItem';
 
 const FormLabel = React.forwardRef<
-  React.ElementRef<typeof LabelPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root>
+  HTMLLabelElement,
+  React.LabelHTMLAttributes<HTMLLabelElement>
 >(({ className, ...props }, ref) => {
   const { error, formItemId } = useFormField();
 
   return (
-    <Label
+    <label
       ref={ref}
-      className={cn(error && 'text-destructive', className)}
+      className={cn(
+        'text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70',
+        error && 'text-red-500',
+        className
+      )}
       htmlFor={formItemId}
       {...props}
     />
@@ -110,11 +110,10 @@ const FormLabel = React.forwardRef<
 FormLabel.displayName = 'FormLabel';
 
 const FormControl = React.forwardRef<
-  React.ElementRef<typeof Slot>,
-  React.ComponentPropsWithoutRef<typeof Slot>
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
 >(({ ...props }, ref) => {
-  const { error, formItemId, formDescriptionId, formMessageId } =
-    useFormField();
+  const { error, formItemId, formDescriptionId, formMessageId } = useFormField();
 
   return (
     <Slot
@@ -142,7 +141,7 @@ const FormDescription = React.forwardRef<
     <p
       ref={ref}
       id={formDescriptionId}
-      className={cn('text-sm text-muted-foreground', className)}
+      className={cn('text-sm text-gray-500', className)}
       {...props}
     />
   );
@@ -164,7 +163,7 @@ const FormMessage = React.forwardRef<
     <p
       ref={ref}
       id={formMessageId}
-      className={cn('text-sm font-medium text-destructive', className)}
+      className={cn('text-sm font-medium text-red-500', className)}
       {...props}
     >
       {body}
