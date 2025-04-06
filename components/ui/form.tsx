@@ -5,19 +5,19 @@ import { useForm } from 'react-hook-form';
 import { Slot } from '@radix-ui/react-slot';
 import { cn } from '@/lib/utils';
 
-interface FormProps<TFormValues> {
-  form: ReturnType<typeof useForm<TFormValues>>;
-  onSubmit: (data: TFormValues) => void;
+interface FormProps {
+  form: any;
+  onSubmit: (data: any) => void;
   children: React.ReactNode;
   className?: string;
 }
 
-const Form = <TFormValues extends Record<string, any>>({
+const Form = ({
   form,
   onSubmit,
   children,
   className,
-}: FormProps<TFormValues>) => {
+}: FormProps) => {
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className={className}>
       {children}
@@ -33,12 +33,12 @@ const FormFieldContext = React.createContext<FormFieldContextValue>(
   {} as FormFieldContextValue
 );
 
-const FormField = <TFormValues extends Record<string, any>>({
+const FormField = ({
   ...props
-}: ReturnType<typeof useForm<TFormValues>>["register"]) => {
+}: { name: string; render: (props: { field: any }) => React.ReactNode }) => {
   return (
     <FormFieldContext.Provider value={{ name: props.name }}>
-      <Slot>{props.children}</Slot>
+      <Slot>{props.render({ field: {} })}</Slot>
     </FormFieldContext.Provider>
   );
 };

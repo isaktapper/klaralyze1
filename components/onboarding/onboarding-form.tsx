@@ -26,7 +26,7 @@ export function OnboardingForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
-  const form = useForm<OnboardingFormValues>({
+  const form = useForm({
     defaultValues: {
       name: "",
       email: "",
