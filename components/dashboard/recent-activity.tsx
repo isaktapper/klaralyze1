@@ -4,13 +4,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { formatDistanceToNow } from 'date-fns';
 
 interface RecentActivityProps {
   className?: string;
+  tickets?: any[]; // Accept real tickets from the API
 }
 
-export function RecentActivity({ className }: RecentActivityProps) {
-  const tickets = [
+export function RecentActivity({ className, tickets: apiTickets }: RecentActivityProps) {
+  // Default mock tickets to show if no real tickets are provided
+  const mockTickets = [
     {
       id: "TKT-7890",
       title: "Login issue with new application version",
@@ -78,13 +81,18 @@ export function RecentActivity({ className }: RecentActivityProps) {
     },
   ];
 
+  // Use real tickets if provided, otherwise fall back to mock data
+  const displayTickets = apiTickets?.length ? apiTickets.map(formatApiTicket) : mockTickets;
+
   const getStatusVariant = (status: string) => {
-    switch (status) {
-      case "Open":
+    switch (status?.toLowerCase()) {
+      case "open":
         return "default";
-      case "Resolved":
+      case "solved":
+      case "resolved":
+      case "closed":
         return "secondary";
-      case "Pending":
+      case "pending":
         return "outline";
       default:
         return "default";
@@ -92,17 +100,36 @@ export function RecentActivity({ className }: RecentActivityProps) {
   };
 
   const getPriorityVariant = (priority: string) => {
-    switch (priority) {
-      case "High":
+    switch (priority?.toLowerCase()) {
+      case "high":
+      case "urgent":
         return "destructive";
-      case "Medium":
+      case "medium":
+      case "normal":
         return "secondary";
-      case "Low":
+      case "low":
         return "outline";
       default:
         return "default";
     }
   };
+
+  // Format API tickets to match the display format
+  function formatApiTicket(ticket: any) {
+    return {
+      id: `TKT-${ticket.ticket_id || 'N/A'}`,
+      title: ticket.subject || 'No subject',
+      customer: {
+        name: 'Customer', // We don't have requester details in this data
+        email: '',
+        avatar: '', 
+      },
+      status: ticket.status || 'Open',
+      priority: ticket.priority || 'Normal',
+      time: ticket.created_date ? formatDistanceToNow(new Date(ticket.created_date), { addSuffix: true }) : 'Unknown',
+      tags: ticket.tags || [],
+    };
+  }
 
   return (
     <Card className={className}>
@@ -114,42 +141,48 @@ export function RecentActivity({ className }: RecentActivityProps) {
         <Button variant="outline" size="sm">View All</Button>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {tickets.map((ticket) => (
-            <div key={ticket.id} className="flex items-start gap-4 rounded-lg border p-3">
-              <Avatar>
-                <AvatarImage src={ticket.customer.avatar} alt={ticket.customer.name} />
-                <AvatarFallback>{ticket.customer.name.substring(0, 2)}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 space-y-1">
-                <div className="flex items-center justify-between">
-                  <div className="font-medium">{ticket.title}</div>
-                  <Badge variant={getStatusVariant(ticket.status)}>
-                    {ticket.status}
-                  </Badge>
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {ticket.id} • {ticket.customer.name}
-                </div>
-                <div className="flex flex-wrap gap-1 pt-1">
-                  {ticket.tags.map((tag) => (
-                    <Badge key={tag} variant="outline" className="text-xs">
-                      {tag}
+        {displayTickets.length === 0 ? (
+          <div className="text-center py-6 text-muted-foreground">
+            No recent tickets found
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {displayTickets.slice(0, 5).map((ticket) => (
+              <div key={ticket.id} className="flex items-start gap-4 rounded-lg border p-3">
+                <Avatar>
+                  <AvatarImage src={ticket.customer.avatar} alt={ticket.customer.name} />
+                  <AvatarFallback>{ticket.customer.name.substring(0, 2)}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <div className="font-medium">{ticket.title}</div>
+                    <Badge variant={getStatusVariant(ticket.status)}>
+                      {ticket.status}
                     </Badge>
-                  ))}
-                </div>
-                <div className="flex items-center justify-between pt-2">
-                  <div className="text-xs text-muted-foreground">
-                    {ticket.time}
                   </div>
-                  <Badge variant={getPriorityVariant(ticket.priority)} className="text-xs">
-                    {ticket.priority}
-                  </Badge>
+                  <div className="text-sm text-muted-foreground">
+                    {ticket.id} • {ticket.customer.name}
+                  </div>
+                  <div className="flex flex-wrap gap-1 pt-1">
+                    {ticket.tags.map((tag: string) => (
+                      <Badge key={tag} variant="outline" className="text-xs">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                  <div className="flex items-center justify-between pt-2">
+                    <div className="text-xs text-muted-foreground">
+                      {ticket.time}
+                    </div>
+                    <Badge variant={getPriorityVariant(ticket.priority)} className="text-xs">
+                      {ticket.priority || 'Normal'}
+                    </Badge>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

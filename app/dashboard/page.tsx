@@ -8,14 +8,24 @@ import { PerformanceMetrics } from "@/components/dashboard/performance-metrics";
 import { FrequentInsights } from "@/components/dashboard/frequent-insights";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, X } from 'lucide-react';
+import { Plus, X, Loader2 } from 'lucide-react';
 import { UserStats } from '@/components/dashboard/user-stats';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { DateRangePicker } from '@/components/dashboard/date-range-picker';
 import { TicketsCountBox } from '@/components/dashboard/tickets-count-box';
 import { DateRange } from 'react-day-picker';
-import { subDays } from 'date-fns';
+import { subDays, format } from 'date-fns';
+
+// Interface for the ticket data returned from the API
+interface TicketData {
+  total: number;
+  ticketsByStatus: Record<string, number>;
+  ticketsCreatedInPeriod: number;
+  resolvedTickets: number;
+  avgResolutionTime: number | null;
+  recentTickets: any[];
+}
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -23,16 +33,19 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const [showZendeskModal, setShowZendeskModal] = useState(false);
   
-  // TEMPORARY OVERRIDE: Always show the connect button and hide data
-  // When testing is complete, remove this override and use the commented line below
-  const hasZendeskConnection = true; // Changed to true for testing
-  // const hasZendeskConnection = user?.user_metadata?.zendesk_connected || false;
+  // Determine if Zendesk is connected based on user metadata
+  const hasZendeskConnection = user?.user_metadata?.zendesk_connected || false;
   
   // Date range state
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: subDays(new Date(), 30),
     to: new Date(),
   });
+
+  // State for ticket data
+  const [ticketData, setTicketData] = useState<TicketData | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   
   // Log user data to debug
   useEffect(() => {
@@ -48,7 +61,7 @@ export default function DashboardPage() {
     apiKey: ''
   });
   const [isConnecting, setIsConnecting] = useState(false);
-  const [error, setError] = useState('');
+  const [formError, setFormError] = useState('');
 
   useEffect(() => {
     // Check for Zendesk connection modal
@@ -58,9 +71,53 @@ export default function DashboardPage() {
     }
   }, [searchParams, router]);
 
+  // Fetch ticket data when date range changes or when the component mounts
+  useEffect(() => {
+    if (hasZendeskConnection && dateRange?.from) {
+      fetchTicketData();
+    }
+  }, [hasZendeskConnection, dateRange]);
+
+  // Function to fetch ticket data from the API
+  const fetchTicketData = async () => {
+    if (!dateRange?.from) return;
+    
+    setIsLoading(true);
+    setError('');
+    
+    try {
+      // Create query parameters for the API call
+      const params = new URLSearchParams();
+      
+      if (dateRange.from) {
+        params.append('from', format(dateRange.from, 'yyyy-MM-dd'));
+      }
+      
+      if (dateRange.to) {
+        params.append('to', format(dateRange.to, 'yyyy-MM-dd'));
+      }
+      
+      // Make the API call
+      const response = await fetch(`/api/dashboard/tickets?${params.toString()}`);
+      
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to fetch ticket data');
+      }
+      
+      const data = await response.json();
+      setTicketData(data);
+    } catch (err) {
+      console.error('Error fetching ticket data:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch ticket data');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleZendeskConnect = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setFormError('');
     setIsConnecting(true);
 
     try {
@@ -68,7 +125,7 @@ export default function DashboardPage() {
       router.push('/connect-zendesk');
       return;
     } catch (err) {
-      setError('Failed to connect to Zendesk. Please check your credentials.');
+      setFormError('Failed to connect to Zendesk. Please check your credentials.');
     } finally {
       setIsConnecting(false);
     }
@@ -125,44 +182,67 @@ export default function DashboardPage() {
             </div>
           )}
           
-          {/* Tickets Count Box - Only show when connected */}
-          {hasZendeskConnection && (
+          {/* Loading state */}
+          {hasZendeskConnection && isLoading && (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="mt-4 text-gray-600">Loading your Zendesk data...</p>
+            </div>
+          )}
+          
+          {/* Error state */}
+          {hasZendeskConnection && error && !isLoading && (
+            <div className="bg-red-50 border border-red-200 rounded-md p-4 my-4">
+              <p className="text-red-600">Error loading data: {error}</p>
+              <Button 
+                onClick={fetchTicketData} 
+                variant="outline" 
+                size="sm"
+                className="mt-2"
+              >
+                Try Again
+              </Button>
+            </div>
+          )}
+          
+          {/* Tickets Count Box - Only show when connected and data is loaded */}
+          {hasZendeskConnection && !isLoading && ticketData && (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               <TicketsCountBox 
-                count={1248} 
+                count={ticketData.total} 
                 change={{
-                  value: 148,
-                  percentage: 12,
+                  value: 0, // No previous data to compare yet
+                  percentage: 0,
                   timeframe: "previous period"
                 }}
               />
               <TicketsCountBox 
-                count={42} 
+                count={ticketData.ticketsByStatus?.open || 0} 
                 title="Open Tickets"
                 description="Tickets awaiting response"
                 change={{
-                  value: -4,
-                  percentage: 8,
+                  value: 0,
+                  percentage: 0,
                   timeframe: "previous period"
                 }}
               />
               <TicketsCountBox 
-                count={982} 
+                count={ticketData.resolvedTickets} 
                 title="Resolved Tickets"
                 description="Tickets resolved in period"
                 change={{
-                  value: 122,
-                  percentage: 14,
+                  value: 0,
+                  percentage: 0,
                   timeframe: "previous period"
                 }}
               />
               <TicketsCountBox 
-                count={224} 
+                count={ticketData.ticketsByStatus?.pending || 0} 
                 title="Pending Tickets"
                 description="Tickets awaiting customer"
                 change={{
-                  value: 7,
-                  percentage: 3,
+                  value: 0,
+                  percentage: 0,
                   timeframe: "previous period"
                 }}
               />
@@ -170,10 +250,10 @@ export default function DashboardPage() {
           )}
           
           {/* Other Content sections - ONLY SHOW WHEN ZENDESK IS CONNECTED */}
-          {hasZendeskConnection && (
+          {hasZendeskConnection && !isLoading && ticketData && (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               <TicketStats />
-              <RecentActivity />
+              <RecentActivity tickets={ticketData.recentTickets} />
               <PerformanceMetrics />
               <FrequentInsights />
             </div>
@@ -234,8 +314,8 @@ export default function DashboardPage() {
                   required
                 />
               </div>
-              {error && (
-                <p className="text-sm text-red-600 mt-2">{error}</p>
+              {formError && (
+                <p className="text-sm text-red-600 mt-2">{formError}</p>
               )}
               <div className="space-y-4 pt-4">
                 <Button 
