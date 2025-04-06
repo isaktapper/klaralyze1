@@ -20,17 +20,20 @@ export async function POST(request: Request) {
 
     // Clean domain (remove https:// and trailing slashes if present)
     const cleanDomain = domainValue.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    
+    // Further clean domain by removing .zendesk.com if it exists
+    const domainForUrl = cleanDomain.replace(/\.zendesk\.com$/, '');
 
     // Test Zendesk credentials by making a request to the API
     try {
       const auth = Buffer.from(`${email}/token:${apiKey}`).toString('base64');
       console.log('Testing Zendesk connection:', {
-        url: `https://${cleanDomain}/api/v2/users/me.json`,
+        url: `https://${domainForUrl}.zendesk.com/api/v2/users/me.json`,
         email,
-        domain: cleanDomain
+        domain: domainForUrl
       });
 
-      const testResponse = await fetch(`https://${cleanDomain}/api/v2/users/me.json`, {
+      const testResponse = await fetch(`https://${domainForUrl}.zendesk.com/api/v2/users/me.json`, {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -101,7 +104,7 @@ export async function POST(request: Request) {
     const { error: updateError } = await supabase.auth.updateUser({
       data: {
         zendesk_connected: true,
-        zendesk_domain: cleanDomain,
+        zendesk_domain: domainForUrl,
         zendesk_email: email,
         // Store API key encrypted in production
         zendesk_api_key: apiKey,

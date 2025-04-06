@@ -82,6 +82,9 @@ export default function ConnectZendeskPage() {
         // First ensure subdomain doesn't already have zendesk.com
         const subdomain = selectedData.subdomain.replace(/\.zendesk\.com$/, '');
         
+        // Log the cleaned subdomain
+        console.log('Using cleaned subdomain:', subdomain);
+        
         // Example API call to validate Zendesk credentials
         const response = await fetch('/api/connect-zendesk', {
           method: 'POST',

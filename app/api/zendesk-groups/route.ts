@@ -21,6 +21,9 @@ export async function GET(request: Request) {
 
     // Clean domain (remove https:// and trailing slashes if present)
     const cleanDomain = subdomain.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    
+    // Further clean domain by removing .zendesk.com if it exists
+    const domainForUrl = cleanDomain.replace(/\.zendesk\.com$/, '');
 
     // Verify authentication
     const cookieStore = cookies();
@@ -54,12 +57,12 @@ export async function GET(request: Request) {
     // Fetch Zendesk groups
     try {
       console.log('Fetching Zendesk groups from:', {
-        url: `https://${cleanDomain}.zendesk.com/api/v2/groups.json`,
+        url: `https://${domainForUrl}.zendesk.com/api/v2/groups.json`,
         email
       });
 
       const auth = Buffer.from(`${email}/token:${apiKey}`).toString('base64');
-      const response = await fetch(`https://${cleanDomain}.zendesk.com/api/v2/groups.json`, {
+      const response = await fetch(`https://${domainForUrl}.zendesk.com/api/v2/groups.json`, {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -126,6 +129,9 @@ export async function POST(request: Request) {
 
     // Clean domain (remove https:// and trailing slashes if present)
     const cleanDomain = domainValue.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    
+    // Further clean domain by removing .zendesk.com if it exists
+    const domainForUrl = cleanDomain.replace(/\.zendesk\.com$/, '');
 
     // Verify authentication
     const cookieStore = cookies();
@@ -159,12 +165,12 @@ export async function POST(request: Request) {
     // Fetch Zendesk groups
     try {
       console.log('Fetching Zendesk groups from:', {
-        url: `https://${cleanDomain}/api/v2/groups.json`,
+        url: `https://${domainForUrl}.zendesk.com/api/v2/groups.json`,
         email
       });
 
       const auth = Buffer.from(`${email}/token:${apiKey}`).toString('base64');
-      const response = await fetch(`https://${cleanDomain}/api/v2/groups.json`, {
+      const response = await fetch(`https://${domainForUrl}.zendesk.com/api/v2/groups.json`, {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
