@@ -36,6 +36,10 @@ export default function DashboardPage() {
   // Determine if Zendesk is connected based on user metadata
   const hasZendeskConnection = user?.user_metadata?.zendesk_connected || false;
   
+  // TEMP FIX: Set to true to show the dashboard UI with mock data
+  // TODO: Remove this override when authentication is fixed
+  const showDashboardUI = true;
+  
   // Date range state
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: subDays(new Date(), 30),
@@ -73,10 +77,10 @@ export default function DashboardPage() {
 
   // Fetch ticket data when date range changes or when the component mounts
   useEffect(() => {
-    if (hasZendeskConnection && dateRange?.from) {
+    if ((hasZendeskConnection || showDashboardUI) && dateRange?.from) {
       fetchTicketData();
     }
-  }, [hasZendeskConnection, dateRange]);
+  }, [hasZendeskConnection, showDashboardUI, dateRange]);
 
   // Function to fetch ticket data from the API
   const fetchTicketData = async () => {
@@ -97,8 +101,14 @@ export default function DashboardPage() {
         params.append('to', format(dateRange.to, 'yyyy-MM-dd'));
       }
       
+      // TEMP FIX: Use the mock API endpoint for development/testing
+      // TODO: Switch back to real endpoint when authentication is fixed
+      const apiUrl = showDashboardUI 
+        ? `/api/dashboard/tickets/mock?${params.toString()}`
+        : `/api/dashboard/tickets?${params.toString()}`;
+      
       // Make the API call
-      const response = await fetch(`/api/dashboard/tickets?${params.toString()}`);
+      const response = await fetch(apiUrl);
       
       if (!response.ok) {
         const data = await response.json();
@@ -156,7 +166,7 @@ export default function DashboardPage() {
           </div>
           
           {/* Date Range Picker - Only show when connected */}
-          {hasZendeskConnection && (
+          {(hasZendeskConnection || showDashboardUI) && (
             <div className="w-full max-w-sm">
               <DateRangePicker
                 dateRange={dateRange}
@@ -166,7 +176,7 @@ export default function DashboardPage() {
           )}
           
           {/* No data state */}
-          {!hasZendeskConnection && (
+          {!showDashboardUI && !hasZendeskConnection && (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <h3 className="text-xl font-semibold text-gray-900">No data available</h3>
               <p className="mt-2 text-gray-600 max-w-md">
@@ -183,7 +193,7 @@ export default function DashboardPage() {
           )}
           
           {/* Loading state */}
-          {hasZendeskConnection && isLoading && (
+          {(hasZendeskConnection || showDashboardUI) && isLoading && (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
               <p className="mt-4 text-gray-600">Loading your Zendesk data...</p>
@@ -191,7 +201,7 @@ export default function DashboardPage() {
           )}
           
           {/* Error state */}
-          {hasZendeskConnection && error && !isLoading && (
+          {(hasZendeskConnection || showDashboardUI) && error && !isLoading && (
             <div className="bg-red-50 border border-red-200 rounded-md p-4 my-4">
               <p className="text-red-600">Error loading data: {error}</p>
               <Button 
@@ -206,7 +216,7 @@ export default function DashboardPage() {
           )}
           
           {/* Tickets Count Box - Only show when connected and data is loaded */}
-          {hasZendeskConnection && !isLoading && ticketData && (
+          {(hasZendeskConnection || showDashboardUI) && !isLoading && ticketData && (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               <TicketsCountBox 
                 count={ticketData.total} 
@@ -250,7 +260,7 @@ export default function DashboardPage() {
           )}
           
           {/* Other Content sections - ONLY SHOW WHEN ZENDESK IS CONNECTED */}
-          {hasZendeskConnection && !isLoading && ticketData && (
+          {(hasZendeskConnection || showDashboardUI) && !isLoading && ticketData && (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               <TicketStats />
               <RecentActivity tickets={ticketData.recentTickets} />
